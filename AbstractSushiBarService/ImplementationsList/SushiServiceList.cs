@@ -4,6 +4,7 @@ using AbstractSushiBarService.Interfaces;
 using AbstractSushiBarService.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AbstractSushiBarService.ImplementationsList
 {
@@ -18,235 +19,161 @@ namespace AbstractSushiBarService.ImplementationsList
 
         public List<SushiViewModel> GetList()
         {
-            List<SushiViewModel> result = new List<SushiViewModel>();
-            for (int i = 0; i < source.Sushis.Count; ++i)
-            {
-                List<SushiIngredientViewModel> sushiIngredients = new List<SushiIngredientViewModel>();
-                for (int j = 0; j < source.SushiIngredients.Count; ++j)
+            List<SushiViewModel> result = source.Sushis
+                .Select(rec => new SushiViewModel
                 {
-                    if (source.SushiIngredients[j].SushiId == source.Sushis[i].Id)
-                    {
-                        string ingredientName = string.Empty;
-                        for (int k = 0; k < source.Ingredients.Count; ++k)
-                        {
-                            if (source.SushiIngredients[j].IngredientId == source.Ingredients[k].Id)
+                    Id = rec.Id,
+                    SushiName = rec.SushiName,
+                    Price = rec.Price,
+                    SushiIngredients = source.SushiIngredients
+                            .Where(recSI => recSI.SushiId == rec.Id)
+                            .Select(recSI => new SushiIngredientViewModel
                             {
-                                ingredientName = source.Ingredients[k].IngredientName;
-                                break;
-                            }
-                        }
-                        sushiIngredients.Add(new SushiIngredientViewModel
-                        {
-                            Id = source.SushiIngredients[j].Id,
-                            SushiId = source.SushiIngredients[j].SushiId,
-                            IngredientId = source.SushiIngredients[j].IngredientId,
-                            IngredientName = ingredientName,
-                            Count = source.SushiIngredients[j].Count
-                        });
-                    }
-                }
-                result.Add(new SushiViewModel
-                {
-                    Id = source.Sushis[i].Id,
-                    SushiName = source.Sushis[i].SushiName,
-                    Price = source.Sushis[i].Price,
-                    SushiIngredients = sushiIngredients
-                });
-            }
+                                Id = recSI.Id,
+                                SushiId = recSI.SushiId,
+                                IngredientId = recSI.IngredientId,
+                                IngredientName = source.Ingredients
+                                    .FirstOrDefault(recI => recI.Id == recSI.IngredientId)?.IngredientName,
+                                Count = recSI.Count
+                            })
+                            .ToList()
+                })
+                .ToList();
             return result;
         }
 
         public SushiViewModel GetElement(int id)
         {
-            for (int i = 0; i < source.Sushis.Count; ++i)
+            Sushi element = source.Sushis.FirstOrDefault(rec => rec.Id == id);
+            if (element != null)
             {
-                List<SushiIngredientViewModel> sushiIngredients = new List<SushiIngredientViewModel>();
-                for (int j = 0; j < source.SushiIngredients.Count; ++j)
+                return new SushiViewModel
                 {
-                    if (source.SushiIngredients[j].SushiId == source.Sushis[i].Id)
-                    {
-                        string ingredientName = string.Empty;
-                        for (int k = 0; k < source.Ingredients.Count; ++k)
-                        {
-                            if (source.SushiIngredients[j].IngredientId == source.Ingredients[k].Id)
+                    Id = element.Id,
+                    SushiName = element.SushiName,
+                    Price = element.Price,
+                    SushiIngredients = source.SushiIngredients
+                            .Where(recSI => recSI.SushiId == element.Id)
+                            .Select(recSI => new SushiIngredientViewModel
                             {
-                                ingredientName = source.Ingredients[k].IngredientName;
-                                break;
-                            }
-                        }
-                        sushiIngredients.Add(new SushiIngredientViewModel
-                        {
-                            Id = source.SushiIngredients[j].Id,
-                            SushiId = source.SushiIngredients[j].SushiId,
-                            IngredientId = source.SushiIngredients[j].IngredientId,
-                            IngredientName = ingredientName,
-                            Count = source.SushiIngredients[j].Count
-                        });
-                    }
-                }
-                if (source.Sushis[i].Id == id)
-                {
-                    return new SushiViewModel
-                    {
-                        Id = source.Sushis[i].Id,
-                        SushiName = source.Sushis[i].SushiName,
-                        Price = source.Sushis[i].Price,
-                        SushiIngredients = sushiIngredients
-                    };
-                }
+                                Id = recSI.Id,
+                                SushiId = recSI.SushiId,
+                                IngredientId = recSI.IngredientId,
+                                IngredientName = source.Ingredients
+                                        .FirstOrDefault(recI => recI.Id == recSI.IngredientId)?.IngredientName,
+                                Count = recSI.Count
+                            })
+                            .ToList()
+                };
             }
-
             throw new Exception("Элемент не найден");
         }
 
         public void AddElement(SushiBindingModel model)
         {
-            int maxId = 0;
-            for (int i = 0; i < source.Sushis.Count; ++i)
+            Sushi element = source.Sushis.FirstOrDefault(rec => rec.SushiName == model.SushiName);
+            if (element != null)
             {
-                if (source.Sushis[i].Id > maxId)
-                {
-                    maxId = source.Sushis[i].Id;
-                }
-                if (source.Sushis[i].SushiName == model.SushiName)
-                {
-                    throw new Exception("Уже есть суши с таким названием");
-                }
+                throw new Exception("Уже есть суши с таким названием");
             }
+            int maxId = source.Sushis.Count > 0 ? source.Sushis.Max(rec => rec.Id) : 0;
             source.Sushis.Add(new Sushi
             {
                 Id = maxId + 1,
                 SushiName = model.SushiName,
                 Price = model.Price
             });
-            int maxSIId = 0;
-            for (int i = 0; i < source.SushiIngredients.Count; ++i)
-            {
-                if (source.SushiIngredients[i].Id > maxSIId)
-                {
-                    maxSIId = source.SushiIngredients[i].Id;
-                }
-            }
-            for (int i = 0; i < model.SushiIngredients.Count; ++i)
-            {
-                for (int j = 1; j < model.SushiIngredients.Count; ++j)
-                {
-                    if (model.SushiIngredients[i].IngredientId ==
-                        model.SushiIngredients[j].IngredientId)
-                    {
-                        model.SushiIngredients[i].Count +=
-                            model.SushiIngredients[j].Count;
-                        model.SushiIngredients.RemoveAt(j--);
-                    }
-                }
-            }
-            for (int i = 0; i < model.SushiIngredients.Count; ++i)
+            int maxSIId = source.SushiIngredients.Count > 0 ?
+                                    source.SushiIngredients.Max(rec => rec.Id) : 0;
+            var groupIngredients = model.SushiIngredients
+                                        .GroupBy(rec => rec.IngredientId)
+                                        .Select(rec => new
+                                        {
+                                            IngredientId = rec.Key,
+                                            Count = rec.Sum(r => r.Count)
+                                        });
+            foreach (var groupIngredient in groupIngredients)
             {
                 source.SushiIngredients.Add(new SushiIngredient
                 {
                     Id = ++maxSIId,
                     SushiId = maxId + 1,
-                    IngredientId = model.SushiIngredients[i].IngredientId,
-                    Count = model.SushiIngredients[i].Count
+                    IngredientId = groupIngredient.IngredientId,
+                    Count = groupIngredient.Count
                 });
             }
         }
 
         public void UpdElement(SushiBindingModel model)
         {
-            int index = -1;
-            for (int i = 0; i < source.Sushis.Count; ++i)
+            Sushi element = source.Sushis.FirstOrDefault(rec =>
+                                        rec.SushiName == model.SushiName && rec.Id != model.Id);
+            if (element != null)
             {
-                if (source.Sushis[i].Id == model.Id)
-                {
-                    index = i;
-                }
-                if (source.Sushis[i].SushiName == model.SushiName &&
-                    source.Sushis[i].Id != model.Id)
-                {
-                    throw new Exception("Уже есть суши с таким названием");
-                }
+                throw new Exception("Уже есть суши с таким названием");
             }
-            if (index == -1)
+            element = source.Sushis.FirstOrDefault(rec => rec.Id == model.Id);
+            if (element == null)
             {
                 throw new Exception("Элемент не найден");
             }
-            source.Sushis[index].SushiName = model.SushiName;
-            source.Sushis[index].Price = model.Price;
-            int maxSIId = 0;
-            for (int i = 0; i < source.SushiIngredients.Count; ++i)
+            element.SushiName = model.SushiName;
+            element.Price = model.Price;
+
+            int maxSIId = source.SushiIngredients.Count > 0 ? source.SushiIngredients.Max(rec => rec.Id) : 0;
+            var ingrIds = model.SushiIngredients.Select(rec => rec.IngredientId).Distinct();
+            var updateIngredients = source.SushiIngredients
+                                            .Where(rec => rec.SushiId == model.Id &&
+                                           ingrIds.Contains(rec.IngredientId));
+            foreach (var updateIngredient in updateIngredients)
             {
-                if (source.SushiIngredients[i].Id > maxSIId)
-                {
-                    maxSIId = source.SushiIngredients[i].Id;
-                }
+                updateIngredient.Count = model.SushiIngredients
+                                                .FirstOrDefault(rec => rec.Id == updateIngredient.Id).Count;
             }
-            for (int i = 0; i < source.SushiIngredients.Count; ++i)
+            source.SushiIngredients.RemoveAll(rec => rec.SushiId == model.Id &&
+                                       !ingrIds.Contains(rec.IngredientId));
+            var groupIngredients = model.SushiIngredients
+                                        .Where(rec => rec.Id == 0)
+                                        .GroupBy(rec => rec.IngredientId)
+                                        .Select(rec => new
+                                        {
+                                            IngredientId = rec.Key,
+                                            Count = rec.Sum(r => r.Count)
+                                        });
+            foreach (var groupIngredient in groupIngredients)
             {
-                if (source.SushiIngredients[i].SushiId == model.Id)
+                SushiIngredient elementSI = source.SushiIngredients
+                                        .FirstOrDefault(rec => rec.SushiId == model.Id &&
+                                                        rec.IngredientId == groupIngredient.IngredientId);
+                if (elementSI != null)
                 {
-                    bool flag = true;
-                    for (int j = 0; j < model.SushiIngredients.Count; ++j)
-                    {
-                        if (source.SushiIngredients[i].Id == model.SushiIngredients[j].Id)
-                        {
-                            source.SushiIngredients[i].Count = model.SushiIngredients[j].Count;
-                            flag = false;
-                            break;
-                        }
-                    }
-                    if (flag)
-                    {
-                        source.SushiIngredients.RemoveAt(i--);
-                    }
+                    elementSI.Count += groupIngredient.Count;
                 }
-            }
-            for (int i = 0; i < model.SushiIngredients.Count; ++i)
-            {
-                if (model.SushiIngredients[i].Id == 0)
+                else
                 {
-                    for (int j = 0; j < source.SushiIngredients.Count; ++j)
+                    source.SushiIngredients.Add(new SushiIngredient
                     {
-                        if (source.SushiIngredients[j].SushiId == model.Id &&
-                            source.SushiIngredients[j].IngredientId == model.SushiIngredients[i].IngredientId)
-                        {
-                            source.SushiIngredients[j].Count += model.SushiIngredients[i].Count;
-                            model.SushiIngredients[i].Id = source.SushiIngredients[j].Id;
-                            break;
-                        }
-                    }
-                    if (model.SushiIngredients[i].Id == 0)
-                    {
-                        source.SushiIngredients.Add(new SushiIngredient
-                        {
-                            Id = ++maxSIId,
-                            SushiId = model.Id,
-                            IngredientId = model.SushiIngredients[i].IngredientId,
-                            Count = model.SushiIngredients[i].Count
-                        });
-                    }
+                        Id = ++maxSIId,
+                        SushiId = model.Id,
+                        IngredientId = groupIngredient.IngredientId,
+                        Count = groupIngredient.Count
+                    });
                 }
             }
         }
 
         public void DelElement(int id)
         {
-            for (int i = 0; i < source.SushiIngredients.Count; ++i)
+            Sushi element = source.Sushis.FirstOrDefault(rec => rec.Id == id);
+            if (element != null)
             {
-                if (source.SushiIngredients[i].SushiId == id)
-                {
-                    source.SushiIngredients.RemoveAt(i--);
-                }
+                source.SushiIngredients.RemoveAll(rec => rec.SushiId == id);
+                source.Sushis.Remove(element);
             }
-            for (int i = 0; i < source.Sushis.Count; ++i)
+            else
             {
-                if (source.Sushis[i].Id == id)
-                {
-                    source.Sushis.RemoveAt(i);
-                    return;
-                }
+                throw new Exception("Элемент не найден");
             }
-            throw new Exception("Элемент не найден");
         }
     }
 }

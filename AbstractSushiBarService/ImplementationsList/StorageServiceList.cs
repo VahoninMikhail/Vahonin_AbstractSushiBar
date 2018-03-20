@@ -4,6 +4,7 @@ using AbstractSushiBarService.Interfaces;
 using AbstractSushiBarService.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AbstractSushiBarService.ImplementationsList
 {
@@ -18,98 +19,62 @@ namespace AbstractSushiBarService.ImplementationsList
 
         public List<StorageViewModel> GetList()
         {
-            List<StorageViewModel> result = new List<StorageViewModel>();
-            for (int i = 0; i < source.Storages.Count; ++i)
-            {
-                List<StorageIngredientViewModel> StorageIngredients = new List<StorageIngredientViewModel>();
-                for (int j = 0; j < source.StorageIngredients.Count; ++j)
+            List<StorageViewModel> result = source.Storages
+                .Select(rec => new StorageViewModel
                 {
-                    if (source.StorageIngredients[j].StorageId == source.Storages[i].Id)
-                    {
-                        string ingredientName = string.Empty;
-                        for (int k = 0; k < source.Ingredients.Count; ++k)
-                        {
-                            if (source.SushiIngredients[j].IngredientId == source.Ingredients[k].Id)
+                    Id = rec.Id,
+                    StorageName = rec.StorageName,
+                    StorageIngredients = source.StorageIngredients
+                            .Where(recSI => recSI.StorageId == rec.Id)
+                            .Select(recSI => new StorageIngredientViewModel
                             {
-                                ingredientName = source.Ingredients[k].IngredientName;
-                                break;
-                            }
-                        }
-                        StorageIngredients.Add(new StorageIngredientViewModel
-                        {
-                            Id = source.StorageIngredients[j].Id,
-                            StorageId = source.StorageIngredients[j].StorageId,
-                            IngredientId = source.StorageIngredients[j].IngredientId,
-                            IngredientName = ingredientName,
-                            Count = source.StorageIngredients[j].Count
-                        });
-                    }
-                }
-                result.Add(new StorageViewModel
-                {
-                    Id = source.Storages[i].Id,
-                    StorageName = source.Storages[i].StorageName,
-                    StorageIngredients = StorageIngredients
-                });
-            }
+                                Id = recSI.Id,
+                                StorageId = recSI.StorageId,
+                                IngredientId = recSI.IngredientId,
+                                IngredientName = source.Ingredients
+                                    .FirstOrDefault(recI => recI.Id == recSI.IngredientId)?.IngredientName,
+                                Count = recSI.Count
+                            })
+                            .ToList()
+                })
+                .ToList();
             return result;
         }
 
         public StorageViewModel GetElement(int id)
         {
-            for (int i = 0; i < source.Storages.Count; ++i)
+            Storage element = source.Storages.FirstOrDefault(rec => rec.Id == id);
+            if (element != null)
             {
-                List<StorageIngredientViewModel> StorageIngredients = new List<StorageIngredientViewModel>();
-                for (int j = 0; j < source.StorageIngredients.Count; ++j)
+                return new StorageViewModel
                 {
-                    if (source.StorageIngredients[j].StorageId == source.Storages[i].Id)
-                    {
-                        string ingredientName = string.Empty;
-                        for (int k = 0; k < source.Ingredients.Count; ++k)
-                        {
-                            if (source.SushiIngredients[j].IngredientId == source.Ingredients[k].Id)
+                    Id = element.Id,
+                    StorageName = element.StorageName,
+                    StorageIngredients = source.StorageIngredients
+                            .Where(recSI => recSI.StorageId == element.Id)
+                            .Select(recSI => new StorageIngredientViewModel
                             {
-                                ingredientName = source.Ingredients[k].IngredientName;
-                                break;
-                            }
-                        }
-                        StorageIngredients.Add(new StorageIngredientViewModel
-                        {
-                            Id = source.StorageIngredients[j].Id,
-                            StorageId = source.StorageIngredients[j].StorageId,
-                            IngredientId = source.StorageIngredients[j].IngredientId,
-                            IngredientName = ingredientName,
-                            Count = source.StorageIngredients[j].Count
-                        });
-                    }
-                }
-                if (source.Storages[i].Id == id)
-                {
-                    return new StorageViewModel
-                    {
-                        Id = source.Storages[i].Id,
-                        StorageName = source.Storages[i].StorageName,
-                        StorageIngredients = StorageIngredients
-                    };
-                }
+                                Id = recSI.Id,
+                                StorageId = recSI.StorageId,
+                                IngredientId = recSI.IngredientId,
+                                IngredientName = source.Ingredients
+                                    .FirstOrDefault(recI => recI.Id == recSI.IngredientId)?.IngredientName,
+                                Count = recSI.Count
+                            })
+                            .ToList()
+                };
             }
             throw new Exception("Элемент не найден");
         }
 
         public void AddElement(StorageBindingModel model)
         {
-            int maxId = 0;
-            for (int i = 0; i < source.Storages.Count; ++i)
+            Storage element = source.Storages.FirstOrDefault(rec => rec.StorageName == model.StorageName);
+            if (element != null)
             {
-                if (source.Storages[i].Id > maxId)
-                {
-                    maxId = source.Storages[i].Id;
-                }
-                if (source.Storages[i].StorageName == model.StorageName)
-                {
-                    throw new Exception("Уже есть склад с таким названием");
-                }
+                throw new Exception("Уже есть склад с таким названием");
             }
+            int maxId = source.Storages.Count > 0 ? source.Storages.Max(rec => rec.Id) : 0;
             source.Storages.Add(new Storage
             {
                 Id = maxId + 1,
@@ -119,44 +84,32 @@ namespace AbstractSushiBarService.ImplementationsList
 
         public void UpdElement(StorageBindingModel model)
         {
-            int index = -1;
-            for (int i = 0; i < source.Storages.Count; ++i)
+            Storage element = source.Storages.FirstOrDefault(rec =>
+                                        rec.StorageName == model.StorageName && rec.Id != model.Id);
+            if (element != null)
             {
-                if (source.Storages[i].Id == model.Id)
-                {
-                    index = i;
-                }
-                if (source.Storages[i].StorageName == model.StorageName &&
-                    source.Storages[i].Id != model.Id)
-                {
-                    throw new Exception("Уже есть склад с таким названием");
-                }
+                throw new Exception("Уже есть склад с таким названием");
             }
-            if (index == -1)
+            element = source.Storages.FirstOrDefault(rec => rec.Id == model.Id);
+            if (element == null)
             {
                 throw new Exception("Элемент не найден");
             }
-            source.Storages[index].StorageName = model.StorageName;
+            element.StorageName = model.StorageName;
         }
 
         public void DelElement(int id)
         {
-            for (int i = 0; i < source.StorageIngredients.Count; ++i)
+            Storage element = source.Storages.FirstOrDefault(rec => rec.Id == id);
+            if (element != null)
             {
-                if (source.StorageIngredients[i].StorageId == id)
-                {
-                    source.StorageIngredients.RemoveAt(i--);
-                }
+                source.StorageIngredients.RemoveAll(rec => rec.StorageId == id);
+                source.Storages.Remove(element);
             }
-            for (int i = 0; i < source.Storages.Count; ++i)
+            else
             {
-                if (source.Storages[i].Id == id)
-                {
-                    source.Storages.RemoveAt(i);
-                    return;
-                }
+                throw new Exception("Элемент не найден");
             }
-            throw new Exception("Элемент не найден");
         }
     }
 }

@@ -4,6 +4,7 @@ using AbstractSushiBarService.Interfaces;
 using AbstractSushiBarService.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AbstractSushiBarService.ImplementationsList
 {
@@ -18,68 +19,32 @@ namespace AbstractSushiBarService.ImplementationsList
 
         public List<ZakazViewModel> GetList()
         {
-            List<ZakazViewModel> result = new List<ZakazViewModel>();
-            for (int i = 0; i < source.Zakazs.Count; ++i)
-            {
-                string visitorFIO = string.Empty;
-                for (int j = 0; j < source.Visitors.Count; ++j)
+            List<ZakazViewModel> result = source.Zakazs
+                .Select(rec => new ZakazViewModel
                 {
-                    if (source.Visitors[j].Id == source.Zakazs[i].VisitorId)
-                    {
-                        visitorFIO = source.Visitors[j].VisitorFIO;
-                        break;
-                    }
-                }
-                string sushiName = string.Empty;
-                for (int j = 0; j < source.Sushis.Count; ++j)
-                {
-                    if (source.Sushis[j].Id == source.Zakazs[i].SushiId)
-                    {
-                        sushiName = source.Sushis[j].SushiName;
-                        break;
-                    }
-                }
-                string cookFIO = string.Empty;
-                if (source.Zakazs[i].CookId.HasValue)
-                {
-                    for (int j = 0; j < source.Cooks.Count; ++j)
-                    {
-                        if (source.Cooks[j].Id == source.Zakazs[i].CookId.Value)
-                        {
-                            cookFIO = source.Cooks[j].CookFIO;
-                            break;
-                        }
-                    }
-                }
-                result.Add(new ZakazViewModel
-                {
-                    Id = source.Zakazs[i].Id,
-                    VisitorId = source.Zakazs[i].VisitorId,
-                    VisitorFIO = visitorFIO,
-                    SushiId = source.Zakazs[i].SushiId,
-                    SushiName = sushiName,
-                    CookId = source.Zakazs[i].CookId,
-                    CookName = cookFIO,
-                    Count = source.Zakazs[i].Count,
-                    Sum = source.Zakazs[i].Sum,
-                    DateCreate = source.Zakazs[i].DateCreate.ToLongDateString(),
-                    DateImplement = source.Zakazs[i].DateImplement?.ToLongDateString(),
-                    Status = source.Zakazs[i].Status.ToString()
-                });
-            }
+                    Id = rec.Id,
+                    VisitorId = rec.VisitorId,
+                    SushiId = rec.SushiId,
+                    CookId = rec.CookId,
+                    DateCreate = rec.DateCreate.ToLongDateString(),
+                    DateImplement = rec.DateImplement?.ToLongDateString(),
+                    Status = rec.Status.ToString(),
+                    Count = rec.Count,
+                    Sum = rec.Sum,
+                    VisitorFIO = source.Visitors
+                                    .FirstOrDefault(recV => recV.Id == rec.VisitorId)?.VisitorFIO,
+                    SushiName = source.Sushis
+                                    .FirstOrDefault(recS => recS.Id == rec.SushiId)?.SushiName,
+                    CookName = source.Cooks
+                                    .FirstOrDefault(recC => recC.Id == rec.CookId)?.CookFIO
+                })
+                .ToList();
             return result;
         }
 
         public void CreateZakaz(ZakazBindingModel model)
         {
-            int maxId = 0;
-            for (int i = 0; i < source.Zakazs.Count; ++i)
-            {
-                if (source.Zakazs[i].Id > maxId)
-                {
-                    maxId = source.Visitors[i].Id;
-                }
-            }
+            int maxId = source.Zakazs.Count > 0 ? source.Zakazs.Max(rec => rec.Id) : 0;
             source.Zakazs.Add(new Zakaz
             {
                 Id = maxId + 1,
@@ -94,131 +59,89 @@ namespace AbstractSushiBarService.ImplementationsList
 
         public void TakeZakazInWork(ZakazBindingModel model)
         {
-            int index = -1;
-            for (int i = 0; i < source.Zakazs.Count; ++i)
-            {
-                if (source.Zakazs[i].Id == model.Id)
-                {
-                    index = i;
-                    break;
-                }
-            }
-            if (index == -1)
+            Zakaz element = source.Zakazs.FirstOrDefault(rec => rec.Id == model.Id);
+            if (element == null)
             {
                 throw new Exception("Элемент не найден");
             }
-            for (int i = 0; i < source.SushiIngredients.Count; ++i)
+            var sushiIngredients = source.SushiIngredients.Where(rec => rec.SushiId == element.SushiId);
+            foreach (var sushiIngredient in sushiIngredients)
             {
-                if (source.SushiIngredients[i].SushiId == source.Zakazs[index].SushiId)
+                int countOnStorages = source.StorageIngredients
+                                            .Where(rec => rec.IngredientId == sushiIngredient.IngredientId)
+                                            .Sum(rec => rec.Count);
+                if (countOnStorages < sushiIngredient.Count * element.Count)
                 {
-                    int countOnStorages = 0;
-                    for (int j = 0; j < source.StorageIngredients.Count; ++j)
+                    var ingredientName = source.Ingredients
+                                    .FirstOrDefault(rec => rec.Id == sushiIngredient.IngredientId);
+                    throw new Exception("Не достаточно ингредиента " + ingredientName?.IngredientName +
+                        ", требуется " + sushiIngredient.Count + ", в наличии " + countOnStorages);
+                }
+            }
+            foreach (var sushiIngredient in sushiIngredients)
+            {
+                int countOnStorages = sushiIngredient.Count * element.Count;
+                var storageIngredients = source.StorageIngredients
+                                            .Where(rec => rec.IngredientId == sushiIngredient.IngredientId);
+                foreach (var storageIngredient in storageIngredients)
+                {
+                    if (storageIngredient.Count >= countOnStorages)
                     {
-                        if (source.StorageIngredients[j].IngredientId == source.SushiIngredients[i].IngredientId)
-                        {
-                            countOnStorages += source.StorageIngredients[j].Count;
-                        }
+                        storageIngredient.Count -= countOnStorages;
+                        break;
                     }
-                    if (countOnStorages < source.SushiIngredients[i].Count * source.Zakazs[index].Count)
+                    else
                     {
-                        for (int j = 0; j < source.Ingredients.Count; ++j)
-                        {
-                            if (source.Ingredients[j].Id == source.SushiIngredients[i].IngredientId)
-                            {
-                                throw new Exception("Не достаточно ингредиента " + source.Ingredients[j].IngredientName +
-                                    ", требуется " + source.SushiIngredients[i].Count + ", в наличии " + countOnStorages);
-                            }
-                        }
+                        countOnStorages -= storageIngredient.Count;
+                        storageIngredient.Count = 0;
                     }
                 }
             }
-            for (int i = 0; i < source.SushiIngredients.Count; ++i)
-            {
-                if (source.SushiIngredients[i].SushiId == source.Zakazs[index].SushiId)
-                {
-                    int countOnStorages = source.SushiIngredients[i].Count * source.Zakazs[index].Count;
-                    for (int j = 0; j < source.StorageIngredients.Count; ++j)
-                    {
-                        if (source.StorageIngredients[j].IngredientId == source.SushiIngredients[i].IngredientId)
-                        {
-                            if (source.StorageIngredients[j].Count >= countOnStorages)
-                            {
-                                source.StorageIngredients[j].Count -= countOnStorages;
-                                break;
-                            }
-                            else
-                            {
-                                countOnStorages -= source.StorageIngredients[j].Count;
-                                source.StorageIngredients[j].Count = 0;
-                            }
-                        }
-                    }
-                }
-            }
-            source.Zakazs[index].CookId = model.CookId;
-            source.Zakazs[index].DateImplement = DateTime.Now;
-            source.Zakazs[index].Status = ZakazStatus.Выполняется;
+            element.CookId = model.CookId;
+            element.DateImplement = DateTime.Now;
+            element.Status = ZakazStatus.Выполняется;
         }
 
         public void FinishZakaz(int id)
         {
-            int index = -1;
-            for (int i = 0; i < source.Zakazs.Count; ++i)
-            {
-                if (source.Visitors[i].Id == id)
-                {
-                    index = i;
-                    break;
-                }
-            }
-            if (index == -1)
+            Zakaz element = source.Zakazs.FirstOrDefault(rec => rec.Id == id);
+            if (element == null)
             {
                 throw new Exception("Элемент не найден");
             }
-            source.Zakazs[index].Status = ZakazStatus.Готов;
+            element.Status = ZakazStatus.Готов;
         }
 
         public void PayZakaz(int id)
         {
-            int index = -1;
-            for (int i = 0; i < source.Zakazs.Count; ++i)
-            {
-                if (source.Visitors[i].Id == id)
-                {
-                    index = i;
-                    break;
-                }
-            }
-            if (index == -1)
+            Zakaz element = source.Zakazs.FirstOrDefault(rec => rec.Id == id);
+            if (element == null)
             {
                 throw new Exception("Элемент не найден");
             }
-            source.Zakazs[index].Status = ZakazStatus.Оплачен;
+            element.Status = ZakazStatus.Оплачен;
         }
 
         public void PutIngredientOnStorage(StorageIngredientBindingModel model)
         {
-            int maxId = 0;
-            for (int i = 0; i < source.StorageIngredients.Count; ++i)
+            StorageIngredient element = source.StorageIngredients
+                                                .FirstOrDefault(rec => rec.StorageId == model.StorageId &&
+                                                                    rec.IngredientId == model.IngredientId);
+            if (element != null)
             {
-                if (source.StorageIngredients[i].StorageId == model.StorageId &&
-                    source.StorageIngredients[i].IngredientId == model.IngredientId)
-                {
-                    source.StorageIngredients[i].Count += model.Count;
-                    return;
-                }
-                if (source.StorageIngredients[i].Id > maxId)
-                {
-                    maxId = source.StorageIngredients[i].Id;
-                }
+                element.Count += model.Count;
             }
-            source.StorageIngredients.Add(new StorageIngredient
+            else
             {
-                Id = ++maxId,
-                StorageId = model.StorageId,
-                IngredientId = model.IngredientId,
-                Count = model.Count
-            });
+                int maxId = source.StorageIngredients.Count > 0 ? source.StorageIngredients.Max(rec => rec.Id) : 0;
+                source.StorageIngredients.Add(new StorageIngredient
+                {
+                    Id = ++maxId,
+                    StorageId = model.StorageId,
+                    IngredientId = model.IngredientId,
+                    Count = model.Count
+                });
+            }
         }
     }
 }
