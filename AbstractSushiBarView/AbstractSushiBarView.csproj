@@ -1,0 +1,254 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{5BDEACD0-25CD-44EB-8F46-394F5869F15E}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>AbstractSushiBarView</RootNamespace>
+    <AssemblyName>AbstractSushiBarView</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="CommonServiceLocator, Version=2.0.3.0, Culture=neutral, PublicKeyToken=489b6accfaf20ef0, processorArchitecture=MSIL">
+      <HintPath>..\packages\Unity.5.7.3\lib\net45\CommonServiceLocator.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+    <Reference Include="Unity.Abstractions, Version=3.3.0.0, Culture=neutral, PublicKeyToken=6d32ff45e0ccc69f, processorArchitecture=MSIL">
+      <HintPath>..\packages\Unity.5.7.3\lib\net45\Unity.Abstractions.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Unity.Configuration, Version=5.2.1.0, Culture=neutral, PublicKeyToken=6d32ff45e0ccc69f, processorArchitecture=MSIL">
+      <HintPath>..\packages\Unity.5.7.3\lib\net45\Unity.Configuration.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Unity.Container, Version=5.7.3.0, Culture=neutral, PublicKeyToken=489b6accfaf20ef0, processorArchitecture=MSIL">
+      <HintPath>..\packages\Unity.5.7.3\lib\net45\Unity.Container.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Unity.Interception, Version=5.5.1.0, Culture=neutral, PublicKeyToken=489b6accfaf20ef0, processorArchitecture=MSIL">
+      <HintPath>..\packages\Unity.5.7.3\lib\net45\Unity.Interception.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Unity.Interception.Configuration, Version=5.1.4.0, Culture=neutral, PublicKeyToken=489b6accfaf20ef0, processorArchitecture=MSIL">
+      <HintPath>..\packages\Unity.5.7.3\lib\net45\Unity.Interception.Configuration.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Unity.RegistrationByConvention, Version=2.1.5.0, Culture=neutral, PublicKeyToken=489b6accfaf20ef0, processorArchitecture=MSIL">
+      <HintPath>..\packages\Unity.5.7.3\lib\net45\Unity.RegistrationByConvention.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Unity.ServiceLocation, Version=2.1.2.0, Culture=neutral, PublicKeyToken=489b6accfaf20ef0, processorArchitecture=MSIL">
+      <HintPath>..\packages\Unity.5.7.3\lib\net45\Unity.ServiceLocation.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="FormBase.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormBase.Designer.cs">
+      <DependentUpon>FormBase.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormCook.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormCook.Designer.cs">
+      <DependentUpon>FormCook.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormCooks.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormCooks.Designer.cs">
+      <DependentUpon>FormCooks.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormCreateZakaz.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormCreateZakaz.Designer.cs">
+      <DependentUpon>FormCreateZakaz.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormIngredient.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormIngredient.Designer.cs">
+      <DependentUpon>FormIngredient.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormIngredients.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormIngredients.Designer.cs">
+      <DependentUpon>FormIngredients.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormPutOnStorage.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormPutOnStorage.Designer.cs">
+      <DependentUpon>FormPutOnStorage.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormStorage.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormStorage.Designer.cs">
+      <DependentUpon>FormStorage.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormStorages.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormStorages.Designer.cs">
+      <DependentUpon>FormStorages.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormSushi.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormSushi.Designer.cs">
+      <DependentUpon>FormSushi.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormSushiIngredient.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormSushiIngredient.Designer.cs">
+      <DependentUpon>FormSushiIngredient.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormSushis.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormSushis.Designer.cs">
+      <DependentUpon>FormSushis.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormTakeZakazInWork.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormTakeZakazInWork.Designer.cs">
+      <DependentUpon>FormTakeZakazInWork.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormVisitor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormVisitor.Designer.cs">
+      <DependentUpon>FormVisitor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormVisitors.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormVisitors.Designer.cs">
+      <DependentUpon>FormVisitors.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="FormBase.resx">
+      <DependentUpon>FormBase.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormCook.resx">
+      <DependentUpon>FormCook.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormCooks.resx">
+      <DependentUpon>FormCooks.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormCreateZakaz.resx">
+      <DependentUpon>FormCreateZakaz.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormIngredient.resx">
+      <DependentUpon>FormIngredient.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormIngredients.resx">
+      <DependentUpon>FormIngredients.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormPutOnStorage.resx">
+      <DependentUpon>FormPutOnStorage.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormStorage.resx">
+      <DependentUpon>FormStorage.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormStorages.resx">
+      <DependentUpon>FormStorages.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormSushi.resx">
+      <DependentUpon>FormSushi.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormSushiIngredient.resx">
+      <DependentUpon>FormSushiIngredient.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormSushis.resx">
+      <DependentUpon>FormSushis.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormTakeZakazInWork.resx">
+      <DependentUpon>FormTakeZakazInWork.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormVisitor.resx">
+      <DependentUpon>FormVisitor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormVisitors.resx">
+      <DependentUpon>FormVisitors.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <None Include="packages.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AbstractSushiBarService\AbstractSushiBarService.csproj">
+      <Project>{0DAE5E78-DF9A-4EB1-844B-249049DB4930}</Project>
+      <Name>AbstractSushiBarService</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
