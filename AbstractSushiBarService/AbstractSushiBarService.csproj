@@ -38,6 +38,18 @@
       <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="itextsharp, Version=5.5.13.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
+      <HintPath>..\packages\iTextSharp.5.5.13\lib\itextsharp.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Office.Interop.Excel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Office.Interop.Excel.15.0.4795.1000\lib\net20\Microsoft.Office.Interop.Excel.dll</HintPath>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
+    <Reference Include="Microsoft.Office.Interop.Word, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Office.Interop.Word.15.0.4797.1003\lib\net20\Microsoft.Office.Interop.Word.dll</HintPath>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
@@ -52,6 +64,7 @@
     <Compile Include="AbstractDbContext.cs" />
     <Compile Include="BindingModels\CookBindingModel.cs" />
     <Compile Include="BindingModels\IngredientBindingModel.cs" />
+    <Compile Include="BindingModels\ReportBindingModel.cs" />
     <Compile Include="BindingModels\StorageBindingModel.cs" />
     <Compile Include="BindingModels\StorageIngredientBindingModel.cs" />
     <Compile Include="BindingModels\SushiBindingModel.cs" />
@@ -61,6 +74,7 @@
     <Compile Include="ImplementationsBD\BaseServiceBD.cs" />
     <Compile Include="ImplementationsBD\CookServiceBD.cs" />
     <Compile Include="ImplementationsBD\IngredientServiceBD.cs" />
+    <Compile Include="ImplementationsBD\ReportServiceBD.cs" />
     <Compile Include="ImplementationsBD\StorageServiceBD.cs" />
     <Compile Include="ImplementationsBD\SushiServiceBD.cs" />
     <Compile Include="ImplementationsBD\VisitorServiceBD.cs" />
@@ -74,6 +88,7 @@
     <Compile Include="Interfaces\IBaseService.cs" />
     <Compile Include="Interfaces\ICookService.cs" />
     <Compile Include="Interfaces\IIngredientService.cs" />
+    <Compile Include="Interfaces\IReportService.cs" />
     <Compile Include="Interfaces\IStorageService.cs" />
     <Compile Include="Interfaces\ISushiService.cs" />
     <Compile Include="Interfaces\IVisitorService.cs" />
@@ -83,13 +98,20 @@
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="ViewModels\CookViewModel.cs" />
     <Compile Include="ViewModels\IngredientViewModel.cs" />
     <Compile Include="ViewModels\StorageIngredientViewModel.cs" />
+    <Compile Include="ViewModels\StoragesLoadViewModel.cs" />
     <Compile Include="ViewModels\StorageViewModel.cs" />
     <Compile Include="ViewModels\SushiIngredientViewModel.cs" />
     <Compile Include="ViewModels\SushiViewModel.cs" />
     <Compile Include="ViewModels\VisitorViewModel.cs" />
+    <Compile Include="ViewModels\VisitorZakazsModel.cs" />
     <Compile Include="ViewModels\ZakazViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -106,6 +128,13 @@
     <EmbeddedResource Include="Migrations\201803222113455_FirstMigration.resx">
       <DependentUpon>201803222113455_FirstMigration.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\TIMCYR.TTF" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

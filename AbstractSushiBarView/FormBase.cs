@@ -1,4 +1,5 @@
-﻿using AbstractSushiBarService.Interfaces;
+﻿using AbstractSushiBarService.BindingModels;
+using AbstractSushiBarService.Interfaces;
 using AbstractSushiBarService.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -15,11 +16,14 @@ namespace AbstractSushiBarView
 
         private readonly IBaseService service;
 
-        public FormBase(IBaseService service)
+        private readonly IReportService reportService;
+
+        public FormBase(IBaseService service, IReportService reportService)
         {
             InitializeComponent();
             this.service = service;
-        }
+			this.reportService = reportService;
+		}
 
         private void LoadData()
         {
@@ -133,6 +137,41 @@ namespace AbstractSushiBarView
         private void buttonRef_Click(object sender, EventArgs e)
         {
             LoadData();
+        }
+
+        private void прайсСушиToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+            SaveFileDialog sfd = new SaveFileDialog
+            {
+                Filter = "doc|*.doc|docx|*.docx"
+            };
+            if (sfd.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    reportService.SaveSushiPrice(new ReportBindingModel
+                    {
+						FileName = sfd.FileName
+					});
+                    MessageBox.Show("Выполнено", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void загруженностьСкладовToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var form = Container.Resolve<FormStoragesLoad>();
+            form.ShowDialog();
+        }
+
+        private void заказыКлиентовToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var form = Container.Resolve<FormVisitorZakazs>();
+            form.ShowDialog();
         }
     }
 }

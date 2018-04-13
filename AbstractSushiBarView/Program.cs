@@ -35,8 +35,9 @@ namespace AbstractSushiBarView
             currentContainer.RegisterType<ISushiService, SushiServiceBD>(new HierarchicalLifetimeManager());
             currentContainer.RegisterType<IStorageService, StorageServiceBD>(new HierarchicalLifetimeManager());
             currentContainer.RegisterType<IBaseService, BaseServiceBD>(new HierarchicalLifetimeManager());
+			currentContainer.RegisterType<IReportService, ReportServiceBD>(new HierarchicalLifetimeManager());
 
-            return currentContainer;
+			return currentContainer;
         }
     }
 }
