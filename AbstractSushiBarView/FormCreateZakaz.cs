@@ -107,7 +107,7 @@ namespace AbstractSushiBarView
                     VisitorId = Convert.ToInt32(comboBoxVisitor.SelectedValue),
                     SushiId = Convert.ToInt32(comboBoxSushi.SelectedValue),
                     Count = Convert.ToInt32(textBoxCount.Text),
-                    Sum = Convert.ToInt32(textBoxSum.Text)
+                    Sum = Convert.ToDecimal(textBoxSum.Text)
                 });
                 MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 DialogResult = DialogResult.OK;
