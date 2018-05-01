@@ -1,33 +1,18 @@
 ﻿using AbstractSushiBarService.BindingModels;
-using AbstractSushiBarService.Interfaces;
+using AbstractSushiBarService.ViewModels;
 using Microsoft.Reporting.WinForms;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractSushiBarView
 {
     public partial class FormVisitorZakazs : Form
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly IReportService service;
-
-        public FormVisitorZakazs(IReportService service)
+        public FormVisitorZakazs()
         {
             InitializeComponent();
-            this.service = service;
         }
-
 
         private void buttonMake_Click(object sender, EventArgs e)
         {
@@ -43,14 +28,21 @@ namespace AbstractSushiBarView
                                             " по " + dateTimePickerTo.Value.ToShortDateString());
                 reportViewer1.LocalReport.SetParameters(parameter);
 
-                var dataSource = service.GetVisitorZakazs(new ReportBindingModel
+                var response = APIClient.PostRequest("api/Report/GetVisitorZakazs", new ReportBindingModel
                 {
                     DateFrom = dateTimePickerFrom.Value,
                     DateTo = dateTimePickerTo.Value
                 });
-                ReportDataSource source = new ReportDataSource("DataSetZakazs", dataSource);
-                reportViewer1.LocalReport.DataSources.Add(source);
-
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    var dataSource = APIClient.GetElement<List<VisitorZakazsModel>>(response);
+                    ReportDataSource source = new ReportDataSource("DataSetZakazs", dataSource);
+                    reportViewer1.LocalReport.DataSources.Add(source);
+                }
+                else
+                {
+                    throw new Exception(APIClient.GetError(response));
+                }
                 reportViewer1.RefreshReport();
             }
             catch (Exception ex)
@@ -74,13 +66,20 @@ namespace AbstractSushiBarView
             {
                 try
                 {
-                    service.SaveVisitorZakazs(new ReportBindingModel
+                    var response = APIClient.PostRequest("api/Report/SaveVisitorZakazs", new ReportBindingModel
                     {
                         FileName = sfd.FileName,
                         DateFrom = dateTimePickerFrom.Value,
                         DateTo = dateTimePickerTo.Value
                     });
-                    MessageBox.Show("Выполнено", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    if (response.Result.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("Выполнено", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        throw new Exception(APIClient.GetError(response));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -88,7 +87,5 @@ namespace AbstractSushiBarView
                 }
             }
         }
-
-
     }
 }

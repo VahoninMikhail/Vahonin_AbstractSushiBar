@@ -1,24 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
-using Unity;
-using Unity.Attributes;
-using AbstractSushiBarService.Interfaces;
+using AbstractSushiBarService.BindingModels;
 using AbstractSushiBarService.ViewModels;
 
 namespace AbstractSushiBarView
 {
     public partial class FormIngredients : Form
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly IIngredientService service;
-
-        public FormIngredients(IIngredientService service)
+        public FormIngredients()
         {
             InitializeComponent();
-            this.service = service;
         }
 
         private void FormIngredients_Load(object sender, EventArgs e)
@@ -30,12 +22,20 @@ namespace AbstractSushiBarView
         {
             try
             {
-                List<IngredientViewModel> list = service.GetList();
-                if (list != null)
+                var response = APIClient.GetRequest("api/Ingredient/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
-                    dataGridView.DataSource = list;
-                    dataGridView.Columns[0].Visible = false;
-                    dataGridView.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                    List<IngredientViewModel> list = APIClient.GetElement<List<IngredientViewModel>>(response);
+                    if (list != null)
+                    {
+                        dataGridView.DataSource = list;
+                        dataGridView.Columns[0].Visible = false;
+                        dataGridView.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APIClient.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -46,7 +46,7 @@ namespace AbstractSushiBarView
 
         private void buttonAdd_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormIngredient>();
+            var form = new FormIngredient();
             if (form.ShowDialog() == DialogResult.OK)
             {
                 LoadData();
@@ -57,7 +57,7 @@ namespace AbstractSushiBarView
         {
             if (dataGridView.SelectedRows.Count == 1)
             {
-                var form = Container.Resolve<FormIngredient>();
+                var form = new FormIngredient();
                 form.Id = Convert.ToInt32(dataGridView.SelectedRows[0].Cells[0].Value);
                 if (form.ShowDialog() == DialogResult.OK)
                 {
@@ -75,7 +75,11 @@ namespace AbstractSushiBarView
                     int id = Convert.ToInt32(dataGridView.SelectedRows[0].Cells[0].Value);
                     try
                     {
-                        service.DelElement(id);
+                        var response = APIClient.PostRequest("api/Ingredient/DelElement", new VisitorBindingModel { Id = id });
+                        if (!response.Result.IsSuccessStatusCode)
+                        {
+                            throw new Exception(APIClient.GetError(response));
+                        }
                     }
                     catch (Exception ex)
                     {

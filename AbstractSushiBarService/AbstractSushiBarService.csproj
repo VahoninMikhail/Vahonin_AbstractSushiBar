@@ -32,11 +32,9 @@
   <ItemGroup>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="itextsharp, Version=5.5.13.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
       <HintPath>..\packages\iTextSharp.5.5.13\lib\itextsharp.dll</HintPath>
@@ -53,6 +51,7 @@
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -92,9 +91,9 @@
     <Compile Include="Interfaces\IStorageService.cs" />
     <Compile Include="Interfaces\ISushiService.cs" />
     <Compile Include="Interfaces\IVisitorService.cs" />
-    <Compile Include="Migrations\201803222113455_FirstMigration.cs" />
-    <Compile Include="Migrations\201803222113455_FirstMigration.Designer.cs">
-      <DependentUpon>201803222113455_FirstMigration.cs</DependentUpon>
+    <Compile Include="Migrations\201805011408250_FirstMigration.cs" />
+    <Compile Include="Migrations\201805011408250_FirstMigration.Designer.cs">
+      <DependentUpon>201805011408250_FirstMigration.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -125,8 +124,8 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Migrations\201803222113455_FirstMigration.resx">
-      <DependentUpon>201803222113455_FirstMigration.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201805011408250_FirstMigration.resx">
+      <DependentUpon>201805011408250_FirstMigration.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

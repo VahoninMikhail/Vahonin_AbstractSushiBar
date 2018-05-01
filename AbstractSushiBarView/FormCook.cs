@@ -1,28 +1,21 @@
 ﻿using AbstractSushiBarService.BindingModels;
-using AbstractSushiBarService.Interfaces;
 using AbstractSushiBarService.ViewModels;
 using System;
+using System.Net.Http;
+using System.Threading.Tasks;
 using System.Windows.Forms;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractSushiBarView
 {
     public partial class FormCook : Form
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
         public int Id { set { id = value; } }
-
-        private readonly ICookService service;
 
         private int? id;
 
-        public FormCook(ICookService service)
+        public FormCook()
         {
             InitializeComponent();
-            this.service = service;
         }
 
         private void FormCook_Load(object sender, EventArgs e)
@@ -31,10 +24,15 @@ namespace AbstractSushiBarView
             {
                 try
                 {
-                    CookViewModel view = service.GetElement(id.Value);
-                    if (view != null)
+                    var response = APIClient.GetRequest("api/Cook/Get/" + id.Value);
+                    if (response.Result.IsSuccessStatusCode)
                     {
-                        textBoxFIO.Text = view.CookFIO;
+                        var cook = APIClient.GetElement<CookViewModel>(response);
+                        textBoxFIO.Text = cook.CookFIO;
+                    }
+                    else
+                    {
+                        throw new Exception(APIClient.GetError(response));
                     }
                 }
                 catch (Exception ex)
@@ -48,14 +46,15 @@ namespace AbstractSushiBarView
         {
             if (string.IsNullOrEmpty(textBoxFIO.Text))
             {
-                MessageBox.Show("Введите ФИО", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Заполните ФИО", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             try
             {
+                Task<HttpResponseMessage> response;
                 if (id.HasValue)
                 {
-                    service.UpdElement(new CookBindingModel
+                    response = APIClient.PostRequest("api/Cook/UpdElement", new CookBindingModel
                     {
                         Id = id.Value,
                         CookFIO = textBoxFIO.Text
@@ -63,14 +62,21 @@ namespace AbstractSushiBarView
                 }
                 else
                 {
-                    service.AddElement(new CookBindingModel
+                    response = APIClient.PostRequest("api/Cook/AddElement", new CookBindingModel
                     {
                         CookFIO = textBoxFIO.Text
                     });
                 }
-                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                DialogResult = DialogResult.OK;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    DialogResult = DialogResult.OK;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APIClient.GetError(response));
+                }
             }
             catch (Exception ex)
             {

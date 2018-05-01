@@ -1,31 +1,24 @@
-﻿using AbstractSushiBarService.Interfaces;
-using AbstractSushiBarService.ViewModels;
+﻿using AbstractSushiBarService.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
-using Unity;
-using Unity.Attributes;
 using AbstractSushiBarService.BindingModels;
+using System.Threading.Tasks;
+using System.Net.Http;
 
 namespace AbstractSushiBarView
 {
     public partial class FormSushi : Form
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
         public int Id { set { id = value; } }
-
-        private readonly ISushiService service;
 
         private int? id;
 
         private List<SushiIngredientViewModel> sushiIngredients;
 
-        public FormSushi(ISushiService service)
+        public FormSushi()
         {
             InitializeComponent();
-            this.service = service;
         }
 
         private void FormSushi_Load(object sender, EventArgs e)
@@ -34,13 +27,18 @@ namespace AbstractSushiBarView
             {
                 try
                 {
-                    SushiViewModel view = service.GetElement(id.Value);
-                    if (view != null)
+                    var response = APIClient.GetRequest("api/Sushi/Get/" + id.Value);
+                    if (response.Result.IsSuccessStatusCode)
                     {
-                        textBoxName.Text = view.SushiName;
-                        textBoxPrice.Text = view.Price.ToString();
-                        sushiIngredients = view.SushiIngredients;
+                        var sushi = APIClient.GetElement<SushiViewModel>(response);
+                        textBoxName.Text = sushi.SushiName;
+                        textBoxPrice.Text = sushi.Price.ToString();
+                        sushiIngredients = sushi.SushiIngredients;
                         LoadData();
+                    }
+                    else
+                    {
+                        throw new Exception(APIClient.GetError(response));
                     }
                 }
                 catch (Exception ex)
@@ -76,7 +74,7 @@ namespace AbstractSushiBarView
 
         private void buttonAdd_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormSushiIngredient>();
+            var form = new FormSushiIngredient();
             if (form.ShowDialog() == DialogResult.OK)
             {
                 if (form.Model != null)
@@ -95,7 +93,7 @@ namespace AbstractSushiBarView
         {
             if (dataGridView.SelectedRows.Count == 1)
             {
-                var form = Container.Resolve<FormSushiIngredient>();
+                var form = new FormSushiIngredient();
                 form.Model = sushiIngredients[dataGridView.SelectedRows[0].Cells[0].RowIndex];
                 if (form.ShowDialog() == DialogResult.OK)
                 {
@@ -143,7 +141,7 @@ namespace AbstractSushiBarView
             }
             if (sushiIngredients == null || sushiIngredients.Count == 0)
             {
-                MessageBox.Show("Заполните компоненты", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Заполните ингредиенты", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             try
@@ -159,9 +157,10 @@ namespace AbstractSushiBarView
                         Count = sushiIngredients[i].Count
                     });
                 }
+                Task<HttpResponseMessage> response;
                 if (id.HasValue)
                 {
-                    service.UpdElement(new SushiBindingModel
+                    response = APIClient.PostRequest("api/Sushi/UpdElement", new SushiBindingModel
                     {
                         Id = id.Value,
                         SushiName = textBoxName.Text,
@@ -171,16 +170,23 @@ namespace AbstractSushiBarView
                 }
                 else
                 {
-                    service.AddElement(new SushiBindingModel
+                    response = APIClient.PostRequest("api/Sushi/AddElement", new SushiBindingModel
                     {
                         SushiName = textBoxName.Text,
                         Price = Convert.ToInt32(textBoxPrice.Text),
                         SushiIngredients = sushiIngredientBM
                     });
                 }
-                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                DialogResult = DialogResult.OK;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    DialogResult = DialogResult.OK;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APIClient.GetError(response));
+                }
             }
             catch (Exception ex)
             {

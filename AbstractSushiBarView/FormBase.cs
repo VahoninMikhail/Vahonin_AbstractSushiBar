@@ -1,43 +1,39 @@
 ﻿using AbstractSushiBarService.BindingModels;
-using AbstractSushiBarService.Interfaces;
 using AbstractSushiBarService.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractSushiBarView
 {
     public partial class FormBase : Form
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly IBaseService service;
-
-        private readonly IReportService reportService;
-
-        public FormBase(IBaseService service, IReportService reportService)
+        public FormBase()
         {
             InitializeComponent();
-            this.service = service;
-			this.reportService = reportService;
-		}
+        }
 
         private void LoadData()
         {
             try
             {
-                List<ZakazViewModel> list = service.GetList();
-                if (list != null)
+                var response = APIClient.GetRequest("api/Base/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
-                    dataGridView.DataSource = list;
-                    dataGridView.Columns[0].Visible = false;
-                    dataGridView.Columns[1].Visible = false;
-                    dataGridView.Columns[3].Visible = false;
-                    dataGridView.Columns[5].Visible = false;
-                    dataGridView.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                    List<ZakazViewModel> list = APIClient.GetElement<List<ZakazViewModel>>(response);
+                    if (list != null)
+                    {
+                        dataGridView.DataSource = list;
+                        dataGridView.Columns[0].Visible = false;
+                        dataGridView.Columns[1].Visible = false;
+                        dataGridView.Columns[3].Visible = false;
+                        dataGridView.Columns[5].Visible = false;
+                        dataGridView.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APIClient.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -48,43 +44,43 @@ namespace AbstractSushiBarView
 
         private void покупателиToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormVisitors>();
+            var form = new FormVisitors();
             form.ShowDialog();
         }
 
         private void ингредиентыToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormIngredients>();
+            var form = new FormIngredients();
             form.ShowDialog();
         }
 
         private void сушиToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormSushis>();
+            var form = new FormSushis();
             form.ShowDialog();
         }
 
         private void складыToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormStorages>();
+            var form = new FormStorages();
             form.ShowDialog();
         }
 
         private void повараToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormCooks>();
+            var form = new FormCooks();
             form.ShowDialog();
         }
 
         private void пополнитьСкладToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormPutOnStorage>();
+            var form = new FormPutOnStorage();
             form.ShowDialog();
         }
 
         private void buttonCreateZakaz_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormCreateZakaz>();
+            var form = new FormCreateZakaz();
             form.ShowDialog();
             LoadData();
         }
@@ -93,8 +89,10 @@ namespace AbstractSushiBarView
         {
             if (dataGridView.SelectedRows.Count == 1)
             {
-                var form = Container.Resolve<FormTakeZakazInWork>();
-                form.Id = Convert.ToInt32(dataGridView.SelectedRows[0].Cells[0].Value);
+                var form = new FormTakeZakazInWork
+                {
+                    Id = Convert.ToInt32(dataGridView.SelectedRows[0].Cells[0].Value)
+                };
                 form.ShowDialog();
                 LoadData();
             }
@@ -107,8 +105,18 @@ namespace AbstractSushiBarView
                 int id = Convert.ToInt32(dataGridView.SelectedRows[0].Cells[0].Value);
                 try
                 {
-                    service.FinishZakaz(id);
-                    LoadData();
+                    var response = APIClient.PostRequest("api/Base/FinishZakaz", new ZakazBindingModel
+                    {
+                        Id = id
+                    });
+                    if (response.Result.IsSuccessStatusCode)
+                    {
+                        LoadData();
+                    }
+                    else
+                    {
+                        throw new Exception(APIClient.GetError(response));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -124,8 +132,18 @@ namespace AbstractSushiBarView
                 int id = Convert.ToInt32(dataGridView.SelectedRows[0].Cells[0].Value);
                 try
                 {
-                    service.PayZakaz(id);
-                    LoadData();
+                    var response = APIClient.PostRequest("api/Base/PayZakaz", new ZakazBindingModel
+                    {
+                        Id = id
+                    });
+                    if (response.Result.IsSuccessStatusCode)
+                    {
+                        LoadData();
+                    }
+                    else
+                    {
+                        throw new Exception(APIClient.GetError(response));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -140,7 +158,7 @@ namespace AbstractSushiBarView
         }
 
         private void прайсСушиToolStripMenuItem_Click(object sender, EventArgs e)
-		{
+        {
             SaveFileDialog sfd = new SaveFileDialog
             {
                 Filter = "doc|*.doc|docx|*.docx"
@@ -149,11 +167,18 @@ namespace AbstractSushiBarView
             {
                 try
                 {
-                    reportService.SaveSushiPrice(new ReportBindingModel
+                    var response = APIClient.PostRequest("api/Report/SaveSushiPrice", new ReportBindingModel
                     {
-						FileName = sfd.FileName
-					});
-                    MessageBox.Show("Выполнено", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        FileName = sfd.FileName
+                    });
+                    if (response.Result.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("Выполнено", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        throw new Exception(APIClient.GetError(response));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -164,13 +189,13 @@ namespace AbstractSushiBarView
 
         private void загруженностьСкладовToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormStoragesLoad>();
+            var form = new FormStoragesLoad();
             form.ShowDialog();
         }
 
         private void заказыКлиентовToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormVisitorZakazs>();
+            var form = new FormVisitorZakazs();
             form.ShowDialog();
         }
     }

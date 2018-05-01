@@ -130,7 +130,7 @@ namespace AbstractSushiBarService.ImplementationsBD
             {
                 StorageName = storage.StorageName,
                 TotalCount = storageCompList.Sum(r => r.Count),
-                Ingredients = storageCompList.Select(r => new Tuple<string, int>(r.Ingredient.IngredientName, r.Count))
+                Ingredients = storageCompList.Select(r => new StoragesIngredientLoadViewModel { IngredientName = r.Ingredient.IngredientName, Count = r.Count }).ToList()
             })
                             .ToList();
         }
@@ -217,9 +217,9 @@ namespace AbstractSushiBarService.ImplementationsBD
 
                             foreach (var listElem in elem.Ingredients)
                             {
-                                excelcells.Value2 = listElem.Item1;
+                                excelcells.Value2 = listElem.IngredientName;
                                 excelcells.ColumnWidth = 10;
-                                excelcells.get_Offset(0, 1).Value2 = listElem.Item2;
+                                excelcells.get_Offset(0, 1).Value2 = listElem.Count;
                                 excelcells = excelcells.get_Offset(1, 0);
                             }
                         }

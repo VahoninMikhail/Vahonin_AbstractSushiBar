@@ -13,7 +13,7 @@ namespace AbstractSushiBarService.Migrations
         
         string IMigrationMetadata.Id
         {
-            get { return "201803222113455_FirstMigration"; }
+            get { return "201805011408250_FirstMigration"; }
         }
         
         string IMigrationMetadata.Source

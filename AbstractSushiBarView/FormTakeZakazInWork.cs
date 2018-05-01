@@ -1,32 +1,20 @@
 ﻿using AbstractSushiBarService.BindingModels;
-using AbstractSushiBarService.Interfaces;
 using AbstractSushiBarService.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractSushiBarView
 {
     public partial class FormTakeZakazInWork : Form
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
         public int Id { set { id = value; } }
-
-        private readonly ICookService serviceC;
-
-        private readonly IBaseService serviceB;
 
         private int? id;
 
-        public FormTakeZakazInWork(ICookService serviceC, IBaseService serviceB)
+        public FormTakeZakazInWork()
         {
             InitializeComponent();
-            this.serviceC = serviceC;
-            this.serviceB = serviceB;
         }
 
         private void FormTakeZakazInWork_Load(object sender, EventArgs e)
@@ -38,13 +26,21 @@ namespace AbstractSushiBarView
                     MessageBox.Show("Не указан заказ", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     Close();
                 }
-                List<CookViewModel> listC = serviceC.GetList();
-                if (listC != null)
+                var response = APIClient.GetRequest("api/Cook/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
-                    comboBoxCook.DisplayMember = "CookFIO";
-                    comboBoxCook.ValueMember = "Id";
-                    comboBoxCook.DataSource = listC;
-                    comboBoxCook.SelectedItem = null;
+                    List<CookViewModel> list = APIClient.GetElement<List<CookViewModel>>(response);
+                    if (list != null)
+                    {
+                        comboBoxCook.DisplayMember = "CookFIO";
+                        comboBoxCook.ValueMember = "Id";
+                        comboBoxCook.DataSource = list;
+                        comboBoxCook.SelectedItem = null;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APIClient.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -62,14 +58,21 @@ namespace AbstractSushiBarView
             }
             try
             {
-                serviceB.TakeZakazInWork(new ZakazBindingModel
+                var response = APIClient.PostRequest("api/Base/TakeZakazInWork", new ZakazBindingModel
                 {
                     Id = id.Value,
                     CookId = Convert.ToInt32(comboBoxCook.SelectedValue)
                 });
-                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                DialogResult = DialogResult.OK;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    DialogResult = DialogResult.OK;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APIClient.GetError(response));
+                }
             }
             catch (Exception ex)
             {

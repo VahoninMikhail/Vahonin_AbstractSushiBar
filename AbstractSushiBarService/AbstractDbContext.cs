@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace AbstractSushiBarService
 {
-    [Table("AbstractDatabase")]
+    [Table("AbstractDatabaseSB")]
     public class AbstractDbContext : DbContext
     {
         public AbstractDbContext()

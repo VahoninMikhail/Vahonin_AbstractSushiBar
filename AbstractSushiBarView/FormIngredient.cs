@@ -1,28 +1,21 @@
 ﻿using System;
 using System.Windows.Forms;
-using Unity;
-using Unity.Attributes;
-using AbstractSushiBarService.Interfaces;
 using AbstractSushiBarService.ViewModels;
 using AbstractSushiBarService.BindingModels;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace AbstractSushiBarView
 {
     public partial class FormIngredient : Form
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
         public int Id { set { id = value; } }
-
-        private readonly IIngredientService service;
 
         private int? id;
 
-        public FormIngredient(IIngredientService service)
+        public FormIngredient()
         {
             InitializeComponent();
-            this.service = service;
         }
 
         private void FormIngredient_Load(object sender, EventArgs e)
@@ -31,10 +24,15 @@ namespace AbstractSushiBarView
             {
                 try
                 {
-                    IngredientViewModel view = service.GetElement(id.Value);
-                    if (view != null)
+                    var response = APIClient.GetRequest("api/Ingredient/Get/" + id.Value);
+                    if (response.Result.IsSuccessStatusCode)
                     {
-                        textBoxName.Text = view.IngredientName;
+                        var ingredient = APIClient.GetElement<IngredientViewModel>(response);
+                        textBoxName.Text = ingredient.IngredientName;
+                    }
+                    else
+                    {
+                        throw new Exception(APIClient.GetError(response));
                     }
                 }
                 catch (Exception ex)
@@ -48,14 +46,15 @@ namespace AbstractSushiBarView
         {
             if (string.IsNullOrEmpty(textBoxName.Text))
             {
-                MessageBox.Show("Введите название", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Заполните название", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             try
             {
+                Task<HttpResponseMessage> response;
                 if (id.HasValue)
                 {
-                    service.UpdElement(new IngredientBindingModel
+                    response = APIClient.PostRequest("api/Ingredient/UpdElement", new IngredientBindingModel
                     {
                         Id = id.Value,
                         IngredientName = textBoxName.Text
@@ -63,14 +62,21 @@ namespace AbstractSushiBarView
                 }
                 else
                 {
-                    service.AddElement(new IngredientBindingModel
+                    response = APIClient.PostRequest("api/Ingredient/AddElement", new IngredientBindingModel
                     {
                         IngredientName = textBoxName.Text
                     });
                 }
-                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                DialogResult = DialogResult.OK;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    DialogResult = DialogResult.OK;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APIClient.GetError(response));
+                }
             }
             catch (Exception ex)
             {

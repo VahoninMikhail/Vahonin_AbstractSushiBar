@@ -1,41 +1,36 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
-using Unity;
-using Unity.Attributes;
 using AbstractSushiBarService.ViewModels;
-using AbstractSushiBarService.Interfaces;
 
 namespace AbstractSushiBarView
 {
     public partial class FormSushiIngredient : Form
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
         public SushiIngredientViewModel Model { set { model = value; } get { return model; } }
-
-        private readonly IIngredientService service;
 
         private SushiIngredientViewModel model;
 
-        public FormSushiIngredient(IIngredientService service)
+        public FormSushiIngredient()
         {
             InitializeComponent();
-            this.service = service;
         }
 
         private void FormSushiIngredient_Load(object sender, EventArgs e)
         {
             try
             {
-                List<IngredientViewModel> list = service.GetList();
-                if (list != null)
+                var response = APIClient.GetRequest("api/Ingredient/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
                     comboBoxIngredient.DisplayMember = "IngredientName";
                     comboBoxIngredient.ValueMember = "Id";
-                    comboBoxIngredient.DataSource = list;
+                    comboBoxIngredient.DataSource = APIClient.GetElement<List<IngredientViewModel>>(response);
                     comboBoxIngredient.SelectedItem = null;
+                }
+                else
+                {
+                    throw new Exception(APIClient.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -54,12 +49,12 @@ namespace AbstractSushiBarView
         {
             if (string.IsNullOrEmpty(textBoxCount.Text))
             {
-                MessageBox.Show("Введите количество", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Заполните поле Количество", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             if (comboBoxIngredient.SelectedValue == null)
             {
-                MessageBox.Show("Выберите ингредиент", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Выберите ингредиенты", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             try
