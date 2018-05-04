@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using AbstractSushiBarService.BindingModels;
 using System.Threading.Tasks;
-using System.Net.Http;
 
 namespace AbstractSushiBarView
 {
@@ -27,22 +26,18 @@ namespace AbstractSushiBarView
             {
                 try
                 {
-                    var response = APIClient.GetRequest("api/Sushi/Get/" + id.Value);
-                    if (response.Result.IsSuccessStatusCode)
-                    {
-                        var sushi = APIClient.GetElement<SushiViewModel>(response);
-                        textBoxName.Text = sushi.SushiName;
-                        textBoxPrice.Text = sushi.Price.ToString();
-                        sushiIngredients = sushi.SushiIngredients;
-                        LoadData();
-                    }
-                    else
-                    {
-                        throw new Exception(APIClient.GetError(response));
-                    }
+                    var sushi = Task.Run(() => APIClient.GetRequestData<SushiViewModel>("api/Sushi/Get/" + id.Value)).Result;
+                    textBoxName.Text = sushi.SushiName;
+                    textBoxPrice.Text = sushi.Price.ToString();
+                    sushiIngredients = sushi.SushiIngredients;
+                    LoadData();
                 }
                 catch (Exception ex)
                 {
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
                     MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
@@ -141,62 +136,60 @@ namespace AbstractSushiBarView
             }
             if (sushiIngredients == null || sushiIngredients.Count == 0)
             {
-                MessageBox.Show("Заполните ингредиенты", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Выберите ингредиенты", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            try
+            List<SushiIngredientBindingModel> sushiIngredientBM = new List<SushiIngredientBindingModel>();
+            for (int i = 0; i < sushiIngredients.Count; ++i)
             {
-                List<SushiIngredientBindingModel> sushiIngredientBM = new List<SushiIngredientBindingModel>();
-                for (int i = 0; i < sushiIngredients.Count; ++i)
+                sushiIngredientBM.Add(new SushiIngredientBindingModel
                 {
-                    sushiIngredientBM.Add(new SushiIngredientBindingModel
-                    {
-                        Id = sushiIngredients[i].Id,
-                        SushiId = sushiIngredients[i].SushiId,
-                        IngredientId = sushiIngredients[i].IngredientId,
-                        Count = sushiIngredients[i].Count
-                    });
-                }
-                Task<HttpResponseMessage> response;
-                if (id.HasValue)
-                {
-                    response = APIClient.PostRequest("api/Sushi/UpdElement", new SushiBindingModel
-                    {
-                        Id = id.Value,
-                        SushiName = textBoxName.Text,
-                        Price = Convert.ToInt32(textBoxPrice.Text),
-                        SushiIngredients = sushiIngredientBM
-                    });
-                }
-                else
-                {
-                    response = APIClient.PostRequest("api/Sushi/AddElement", new SushiBindingModel
-                    {
-                        SushiName = textBoxName.Text,
-                        Price = Convert.ToInt32(textBoxPrice.Text),
-                        SushiIngredients = sushiIngredientBM
-                    });
-                }
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    DialogResult = DialogResult.OK;
-                    Close();
-                }
-                else
-                {
-                    throw new Exception(APIClient.GetError(response));
-                }
+                    Id = sushiIngredients[i].Id,
+                    SushiId = sushiIngredients[i].SushiId,
+                    IngredientId = sushiIngredients[i].IngredientId,
+                    Count = sushiIngredients[i].Count
+                });
             }
-            catch (Exception ex)
+            string name = textBoxName.Text;
+            int price = Convert.ToInt32(textBoxPrice.Text);
+            Task task;
+            if (id.HasValue)
             {
+                task = Task.Run(() => APIClient.PostRequestData("api/Sushi/UpdElement", new SushiBindingModel
+                {
+                    Id = id.Value,
+                    SushiName = name,
+                    Price = price,
+                    SushiIngredients = sushiIngredientBM
+                }));
+            }
+            else
+            {
+                task = Task.Run(() => APIClient.PostRequestData("api/Sushi/AddElement", new SushiBindingModel
+                {
+                    SushiName = name,
+                    Price = price,
+                    SushiIngredients = sushiIngredientBM
+                }));
+            }
+
+            task.ContinueWith((prevTask) => MessageBox.Show("Сохранение прошло успешно. Обновите список", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information),
+                TaskContinuationOptions.OnlyOnRanToCompletion);
+            task.ContinueWith((prevTask) =>
+            {
+                var ex = (Exception)prevTask.Exception;
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            }, TaskContinuationOptions.OnlyOnFaulted);
+
+            Close();
         }
 
         private void buttonCancel_Click(object sender, EventArgs e)
         {
-            DialogResult = DialogResult.Cancel;
             Close();
         }
     }

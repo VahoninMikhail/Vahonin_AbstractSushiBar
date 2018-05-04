@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using AbstractSushiBarService.ViewModels;
 
@@ -20,21 +21,17 @@ namespace AbstractSushiBarView
         {
             try
             {
-                var response = APIClient.GetRequest("api/Ingredient/GetList");
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    comboBoxIngredient.DisplayMember = "IngredientName";
-                    comboBoxIngredient.ValueMember = "Id";
-                    comboBoxIngredient.DataSource = APIClient.GetElement<List<IngredientViewModel>>(response);
-                    comboBoxIngredient.SelectedItem = null;
-                }
-                else
-                {
-                    throw new Exception(APIClient.GetError(response));
-                }
+                comboBoxIngredient.DisplayMember = "IngredientName";
+                comboBoxIngredient.ValueMember = "Id";
+                comboBoxIngredient.DataSource = Task.Run(() => APIClient.GetRequestData<List<IngredientViewModel>>("api/Ingredient/GetList")).Result;
+                comboBoxIngredient.SelectedItem = null;
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             if (model != null)
@@ -54,7 +51,7 @@ namespace AbstractSushiBarView
             }
             if (comboBoxIngredient.SelectedValue == null)
             {
-                MessageBox.Show("Выберите ингредиенты", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Выберите ингредиент", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             try

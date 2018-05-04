@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using AbstractSushiBarService.ViewModels;
 using AbstractSushiBarService.BindingModels;
+using System.Threading.Tasks;
 
 namespace AbstractSushiBarView
 {
@@ -17,41 +18,30 @@ namespace AbstractSushiBarView
         {
             try
             {
-                var responseI = APIClient.GetRequest("api/Ingredient/GetList");
-                if (responseI.Result.IsSuccessStatusCode)
+                List<IngredientViewModel> listI = Task.Run(() => APIClient.GetRequestData<List<IngredientViewModel>>("api/Ingredient/GetList")).Result;
+                if (listI != null)
                 {
-                    List<IngredientViewModel> list = APIClient.GetElement<List<IngredientViewModel>>(responseI);
-                    if (list != null)
-                    {
-                        comboBoxIngredient.DisplayMember = "IngredientName";
-                        comboBoxIngredient.ValueMember = "Id";
-                        comboBoxIngredient.DataSource = list;
-                        comboBoxIngredient.SelectedItem = null;
-                    }
+                    comboBoxIngredient.DisplayMember = "IngredientName";
+                    comboBoxIngredient.ValueMember = "Id";
+                    comboBoxIngredient.DataSource = listI;
+                    comboBoxIngredient.SelectedItem = null;
                 }
-                else
+
+                List<StorageViewModel> listSt = Task.Run(() => APIClient.GetRequestData<List<StorageViewModel>>("api/Storage/GetList")).Result;
+                if (listSt != null)
                 {
-                    throw new Exception(APIClient.GetError(responseI));
-                }
-                var responseSt = APIClient.GetRequest("api/Storage/GetList");
-                if (responseSt.Result.IsSuccessStatusCode)
-                {
-                    List<StorageViewModel> list = APIClient.GetElement<List<StorageViewModel>>(responseSt);
-                    if (list != null)
-                    {
-                        comboBoxStorage.DisplayMember = "StorageName";
-                        comboBoxStorage.ValueMember = "Id";
-                        comboBoxStorage.DataSource = list;
-                        comboBoxStorage.SelectedItem = null;
-                    }
-                }
-                else
-                {
-                    throw new Exception(APIClient.GetError(responseI));
+                    comboBoxStorage.DisplayMember = "StorageName";
+                    comboBoxStorage.ValueMember = "Id";
+                    comboBoxStorage.DataSource = listSt;
+                    comboBoxStorage.SelectedItem = null;
                 }
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -75,32 +65,42 @@ namespace AbstractSushiBarView
             }
             try
             {
-                var response = APIClient.PostRequest("api/Base/PutIngredientOnStorage", new StorageIngredientBindingModel
+                int ingredientId = Convert.ToInt32(comboBoxIngredient.SelectedValue);
+                int storageId = Convert.ToInt32(comboBoxStorage.SelectedValue);
+                int count = Convert.ToInt32(textBoxCount.Text);
+                Task task = Task.Run(() => APIClient.PostRequestData("api/Base/PutIngredientOnStorage", new StorageIngredientBindingModel
                 {
-                    IngredientId = Convert.ToInt32(comboBoxIngredient.SelectedValue),
-                    StorageId = Convert.ToInt32(comboBoxStorage.SelectedValue),
-                    Count = Convert.ToInt32(textBoxCount.Text)
-                });
-                if (response.Result.IsSuccessStatusCode)
+                    IngredientId = ingredientId,
+                    StorageId = storageId,
+                    Count = count
+                }));
+
+                task.ContinueWith((prevTask) => MessageBox.Show("Склад пополнен", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information),
+                    TaskContinuationOptions.OnlyOnRanToCompletion);
+                task.ContinueWith((prevTask) =>
                 {
-                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    DialogResult = DialogResult.OK;
-                    Close();
-                }
-                else
-                {
-                    throw new Exception(APIClient.GetError(response));
-                }
+                    var ex = (Exception)prevTask.Exception;
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
+                    MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }, TaskContinuationOptions.OnlyOnFaulted);
+
+                Close();
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private void buttonCancel_Click(object sender, EventArgs e)
         {
-            DialogResult = DialogResult.Cancel;
             Close();
         }
     }
