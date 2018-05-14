@@ -1,0 +1,9 @@
+﻿<Application x:Class="AbstractSushiBarWPF.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:AbstractSushiBarWPF"
+             StartupUri="BaseWindow.xaml">
+    <Application.Resources>
+         
+    </Application.Resources>
+</Application>

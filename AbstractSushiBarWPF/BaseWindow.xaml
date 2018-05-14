@@ -1,0 +1,37 @@
+﻿<Window x:Class="AbstractSushiBarWPF.BaseWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AbstractSushiBarWPF"
+        mc:Ignorable="d"
+        Title="Суши-бар" Height="351" Width="1085">
+    <Grid>
+        <DataGrid x:Name="dataGridViewBase" HorizontalAlignment="Left" Height="272" Margin="0,27,-88,0" VerticalAlignment="Top" Width="880" IsReadOnly="True"/>
+        <Menu x:Name="menu" HorizontalAlignment="Left" Height="22" VerticalAlignment="Top" Width="1047" Margin="10,0,-46,0">
+            <MenuItem Header="Справочники" Height="22" Width="177" RenderTransformOrigin="0.5,0.5">
+                <MenuItem.RenderTransform>
+                    <TransformGroup>
+                        <ScaleTransform/>
+                        <SkewTransform/>
+                        <RotateTransform Angle="-0.443"/>
+                        <TranslateTransform/>
+                    </TransformGroup>
+                </MenuItem.RenderTransform>
+                <MenuItem Header="Посетители" HorizontalAlignment="Left" Height="28" Width="167" Margin="0,0,-27,0" Click="посетителиToolStripMenuItem_Click"/>
+                <MenuItem Header="Ингредиенты" HorizontalAlignment="Left" Height="24" Width="181" Margin="0,0,-41,0" Click="ингредиентыToolStripMenuItem_Click"/>
+                <MenuItem Header="Суши" HorizontalAlignment="Left" Height="28" Width="164" Margin="0,0,-24,0" Click="сушиToolStripMenuItem_Click"/>
+                <MenuItem Header="Склады" HorizontalAlignment="Left" Height="28" Width="146" Margin="0,0,-6,0" Click="складыToolStripMenuItem_Click"/>
+                <MenuItem Header="Повара" HorizontalAlignment="Left" Height="28" Width="178" Margin="0,0,-38,0" Click="повараToolStripMenuItem_Click"/>
+
+            </MenuItem>
+            <MenuItem Header="Пополнить склад" Height="22" Width="135" Click="пополнитьСкладToolStripMenuItem_Click"/>
+        </Menu>
+        <Button x:Name="buttonCreateZakaz" Content="Создать заказ" HorizontalAlignment="Left" Margin="909,48,0,0" VerticalAlignment="Top" Width="138" Height="28" Click="buttonCreateZakaz_Click"/>
+        <Button x:Name="buttonTakeZakazInWork" Content="Отдать на выполнение" HorizontalAlignment="Left" Margin="909,100,0,0" VerticalAlignment="Top" Width="138" Height="28" Click="buttonTakeZakazInWork_Click"/>
+        <Button x:Name="buttonZakazReady" Content="Заказ готов" HorizontalAlignment="Left" Margin="909,154,0,0" VerticalAlignment="Top" Width="138" Height="28" Click="buttonZakazReady_Click"/>
+        <Button x:Name="buttonPayZakaz" Content="Заказ оплачен" HorizontalAlignment="Left" Margin="909,202,0,0" VerticalAlignment="Top" Width="138" Height="28" Click="buttonPayZakaz_Click"/>
+        <Button x:Name="buttonRef" Content="Обновить список" HorizontalAlignment="Left" Margin="909,254,0,0" VerticalAlignment="Top" Width="138" Height="28" Click="buttonRef_Click"/>
+
+    </Grid>
+</Window>
