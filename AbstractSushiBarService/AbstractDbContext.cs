@@ -30,6 +30,8 @@ namespace AbstractSushiBarService
 
         public virtual DbSet<StorageIngredient> StorageIngredients { get; set; }
 
+        public virtual DbSet<MessageInfo> MessageInfos { get; set; }
+
         public override int SaveChanges()
         {
             try

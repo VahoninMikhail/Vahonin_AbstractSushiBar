@@ -3,7 +3,7 @@ namespace AbstractSushiBarService.Migrations
     using System;
     using System.Data.Entity.Migrations;
     
-    public partial class FirstMigration : DbMigration
+    public partial class FirstMigrationSB : DbMigration
     {
         public override void Up()
         {

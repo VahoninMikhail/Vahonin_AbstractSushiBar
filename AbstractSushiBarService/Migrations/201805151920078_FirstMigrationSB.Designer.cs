@@ -7,13 +7,13 @@ namespace AbstractSushiBarService.Migrations
     using System.Resources;
     
     [GeneratedCode("EntityFramework.Migrations", "6.2.0-61023")]
-    public sealed partial class FirstMigration : IMigrationMetadata
+    public sealed partial class FirstMigrationSB : IMigrationMetadata
     {
-        private readonly ResourceManager Resources = new ResourceManager(typeof(FirstMigration));
+        private readonly ResourceManager Resources = new ResourceManager(typeof(FirstMigrationSB));
         
         string IMigrationMetadata.Id
         {
-            get { return "201805011408250_FirstMigration"; }
+            get { return "201805151920078_FirstMigrationSB"; }
         }
         
         string IMigrationMetadata.Source

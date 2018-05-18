@@ -12,6 +12,7 @@ namespace AbstractSushiBarView
         static void Main()
         {
             APIClient.Connect();
+            MailVisitor.Connect();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new FormBase());

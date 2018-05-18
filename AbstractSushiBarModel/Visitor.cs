@@ -11,7 +11,12 @@ namespace AbstractSushiBarModel
         [Required]
         public string VisitorFIO { get; set; }
 
+        public string Mail { get; set; }
+
         [ForeignKey("VisitorId")]
         public virtual List<Zakaz> Zakazs { get; set; }
+
+        [ForeignKey("VisitorId")]
+        public virtual List<MessageInfo> MessageInfos { get; set; }
     }
 }

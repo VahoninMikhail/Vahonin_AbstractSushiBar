@@ -190,5 +190,11 @@ namespace AbstractSushiBarView
             var form = new FormVisitorZakazs();
             form.ShowDialog();
         }
+
+        private void письмаToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var form = new FormMails();
+            form.ShowDialog();
+        }
     }
 }

@@ -5,8 +5,6 @@ using AbstractSushiBarService.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AbstractSushiBarService.ImplementationsBD
 {
@@ -25,6 +23,7 @@ namespace AbstractSushiBarService.ImplementationsBD
                 .Select(rec => new VisitorViewModel
                 {
                     Id = rec.Id,
+                    Mail = rec.Mail,
                     VisitorFIO = rec.VisitorFIO
                 })
                 .ToList();
@@ -39,7 +38,18 @@ namespace AbstractSushiBarService.ImplementationsBD
                 return new VisitorViewModel
                 {
                     Id = element.Id,
-                    VisitorFIO = element.VisitorFIO
+                    VisitorFIO = element.VisitorFIO,
+                    Mail = element.Mail,
+                    Messages = context.MessageInfos
+                            .Where(recM => recM.VisitorId == element.Id)
+                            .Select(recM => new MessageInfoViewModel
+                            {
+                                MessageId = recM.MessageId,
+                                DateDelivery = recM.DateDelivery,
+                                Subject = recM.Subject,
+                                Body = recM.Body
+                            })
+                            .ToList()
                 };
             }
             throw new Exception("Элемент не найден");
@@ -54,7 +64,8 @@ namespace AbstractSushiBarService.ImplementationsBD
             }
             context.Visitors.Add(new Visitor
             {
-                VisitorFIO = model.VisitorFIO
+                VisitorFIO = model.VisitorFIO,
+                Mail = model.Mail
             });
             context.SaveChanges();
         }
@@ -73,6 +84,7 @@ namespace AbstractSushiBarService.ImplementationsBD
                 throw new Exception("Элемент не найден");
             }
             element.VisitorFIO = model.VisitorFIO;
+            element.Mail = model.Mail;
             context.SaveChanges();
         }
 

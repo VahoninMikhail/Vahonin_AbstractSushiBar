@@ -55,6 +55,7 @@ namespace AbstractSushiBarRestApi
             container.RegisterType<IStorageService, StorageServiceBD>(new HierarchicalLifetimeManager());
             container.RegisterType<IBaseService, BaseServiceBD>(new HierarchicalLifetimeManager());
             container.RegisterType<IReportService, ReportServiceBD>(new HierarchicalLifetimeManager());
+            container.RegisterType<IMessageInfoService, MessageInfoServiceBD>(new HierarchicalLifetimeManager());
         }
     }
 }

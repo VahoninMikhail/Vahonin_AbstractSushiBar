@@ -9,6 +9,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Data.Entity;
+using System.Net.Mail;
+using System.Configuration;
+using System.Net;
 
 namespace AbstractSushiBarService.ImplementationsBD
 {
@@ -50,7 +53,7 @@ namespace AbstractSushiBarService.ImplementationsBD
 
         public void CreateZakaz(ZakazBindingModel model)
         {
-            context.Zakazs.Add(new Zakaz
+            var zakaz = new Zakaz
             {
                 VisitorId = model.VisitorId,
                 SushiId = model.SushiId,
@@ -58,8 +61,14 @@ namespace AbstractSushiBarService.ImplementationsBD
                 Count = model.Count,
                 Sum = model.Sum,
                 Status = ZakazStatus.Принят
-            });
+            };
+            context.Zakazs.Add(zakaz);
             context.SaveChanges();
+
+            var visitor = context.Visitors.FirstOrDefault(x => x.Id == model.VisitorId);
+            SendEmail(visitor.Mail, "Оповещение по заказам",
+                string.Format("Заказ №{0} от {1} создан успешно", zakaz.Id,
+                zakaz.DateCreate.ToShortDateString()));
         }
 
         public void TakeZakazInWork(ZakazBindingModel model)
@@ -68,8 +77,7 @@ namespace AbstractSushiBarService.ImplementationsBD
             {
                 try
                 {
-
-                    Zakaz element = context.Zakazs.FirstOrDefault(rec => rec.Id == model.Id);
+                    Zakaz element = context.Zakazs.Include(rec => rec.Visitor).FirstOrDefault(rec => rec.Id == model.Id);
                     if (element == null)
                     {
                         throw new Exception("Элемент не найден");
@@ -111,6 +119,8 @@ namespace AbstractSushiBarService.ImplementationsBD
                     element.DateImplement = DateTime.Now;
                     element.Status = ZakazStatus.Выполняется;
                     context.SaveChanges();
+                    SendEmail(element.Visitor.Mail, "Оповещение по заказам",
+                        string.Format("Заказ №{0} от {1} передан в работу", element.Id, element.DateCreate.ToShortDateString()));
                     transaction.Commit();
                 }
                 catch (Exception)
@@ -123,24 +133,31 @@ namespace AbstractSushiBarService.ImplementationsBD
 
         public void FinishZakaz(int id)
         {
-            Zakaz element = context.Zakazs.FirstOrDefault(rec => rec.Id == id);
+            Zakaz element = context.Zakazs.Include(rec => rec.Visitor).FirstOrDefault(rec => rec.Id == id);
             if (element == null)
             {
                 throw new Exception("Элемент не найден");
             }
             element.Status = ZakazStatus.Готов;
             context.SaveChanges();
+
+            SendEmail(element.Visitor.Mail, "Оповещение по заказам",
+                string.Format("Заказ №{0} от {1} передан на оплату", element.Id,
+                element.DateCreate.ToShortDateString()));
         }
 
         public void PayZakaz(int id)
         {
-            Zakaz element = context.Zakazs.FirstOrDefault(rec => rec.Id == id);
+            Zakaz element = context.Zakazs.Include(rec => rec.Visitor).FirstOrDefault(rec => rec.Id == id);
             if (element == null)
             {
                 throw new Exception("Элемент не найден");
             }
             element.Status = ZakazStatus.Оплачен;
             context.SaveChanges();
+            
+            SendEmail(element.Visitor.Mail, "Оповещение по заказам",
+                string.Format("Заказ №{0} от {1} оплачен успешно", element.Id, element.DateCreate.ToShortDateString()));
         }
 
         public void PutIngredientOnStorage(StorageIngredientBindingModel model)
@@ -162,6 +179,40 @@ namespace AbstractSushiBarService.ImplementationsBD
                 });
             }
             context.SaveChanges();
+        }
+
+        private void SendEmail(string mailAddress, string subject, string text)
+        {
+            MailMessage objMailMessage = new MailMessage();
+            SmtpClient objSmtpClient = null;
+
+            try
+            {
+                objMailMessage.From = new MailAddress(ConfigurationManager.AppSettings["MailLogin"]);
+                objMailMessage.To.Add(new MailAddress(mailAddress));
+                objMailMessage.Subject = subject;
+                objMailMessage.Body = text;
+                objMailMessage.SubjectEncoding = System.Text.Encoding.UTF8;
+                objMailMessage.BodyEncoding = System.Text.Encoding.UTF8;
+
+                objSmtpClient = new SmtpClient("smtp.gmail.com", 587);
+                objSmtpClient.UseDefaultCredentials = false;
+                objSmtpClient.EnableSsl = true;
+                objSmtpClient.DeliveryMethod = SmtpDeliveryMethod.Network;
+                objSmtpClient.Credentials = new NetworkCredential(ConfigurationManager.AppSettings["MailLogin"],
+                    ConfigurationManager.AppSettings["MailPassword"]);
+
+                objSmtpClient.Send(objMailMessage);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                objMailMessage = null;
+                objSmtpClient = null;
+            }
         }
     }
 }
