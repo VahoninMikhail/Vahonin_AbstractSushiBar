@@ -1,7 +1,9 @@
-﻿using AbstractSushiBarService.ImplementationsList;
+﻿using AbstractSushiBarService;
+using AbstractSushiBarService.ImplementationsBD;
 using AbstractSushiBarService.Interfaces;
 using AbstractSushiBarWPF;
 using System;
+using System.Data.Entity;
 using System.Windows;
 using Unity;
 using Unity.Lifetime;
@@ -25,12 +27,13 @@ namespace WpfMotorZavod
         public static IUnityContainer BuildUnityContainer()
         {
             var currentContainer = new UnityContainer();
-            currentContainer.RegisterType<IVisitorService, VisitorServiceList>(new HierarchicalLifetimeManager());
-            currentContainer.RegisterType<IIngredientService, IngredientServiceList>(new HierarchicalLifetimeManager());
-            currentContainer.RegisterType<ICookService, CookServiceList>(new HierarchicalLifetimeManager());
-            currentContainer.RegisterType<ISushiService, SushiServiceList>(new HierarchicalLifetimeManager());
-            currentContainer.RegisterType<IStorageService, StorageServiceList>(new HierarchicalLifetimeManager());
-            currentContainer.RegisterType<IBaseService, BaseServiceList>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<DbContext, AbstractDbContext>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<IVisitorService, VisitorServiceBD>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<IIngredientService, IngredientServiceBD>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<ICookService, CookServiceBD>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<ISushiService, SushiServiceBD>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<IStorageService, StorageServiceBD>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<IBaseService, BaseServiceBD>(new HierarchicalLifetimeManager());
 
             return currentContainer;
         }
