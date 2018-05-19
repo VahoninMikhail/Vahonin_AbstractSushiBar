@@ -1,4 +1,5 @@
-﻿using AbstractSushiBarService.BindingModels;
+﻿using AbstractSushiBarRestApi.Services;
+using AbstractSushiBarService.BindingModels;
 using AbstractSushiBarService.Interfaces;
 using System;
 using System.Web.Http;
@@ -53,6 +54,18 @@ namespace AbstractSushiBarRestApi.Controllers
         public void PutIngredientOnStorage(StorageIngredientBindingModel model)
         {
             _service.PutIngredientOnStorage(model);
+        }
+
+        [HttpGet]
+        public IHttpActionResult GetInfo()
+        {
+            ReflectionService service = new ReflectionService();
+            var list = service.GetInfoByAssembly();
+            if (list == null)
+            {
+                InternalServerError(new Exception("Нет данных"));
+            }
+            return Ok(list);
         }
     }
 }

@@ -62,6 +62,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AbstractDbContext.cs" />
+    <Compile Include="Attributies\CustomInterfaceAttribute.cs" />
+    <Compile Include="Attributies\CustomMethodAttribute.cs" />
     <Compile Include="BindingModels\CookBindingModel.cs" />
     <Compile Include="BindingModels\IngredientBindingModel.cs" />
     <Compile Include="BindingModels\MessageInfoBindingModel.cs" />
