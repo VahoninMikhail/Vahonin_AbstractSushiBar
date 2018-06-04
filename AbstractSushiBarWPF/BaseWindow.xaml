@@ -26,6 +26,11 @@
 
             </MenuItem>
             <MenuItem Header="Пополнить склад" Height="22" Width="135" Click="пополнитьСкладToolStripMenuItem_Click"/>
+            <MenuItem Header="Отчеты" Height="22" Width="100">
+                <MenuItem Header="Прайс суши" HorizontalAlignment="Left" Height="35" Width="190" Margin="0,0,-50,0" Click="прайсСушиToolStripMenuItem_Click"/>
+                <MenuItem Header="Загруженность складов" Height="38" Margin="1,0,-20,0" Click="загруженностьСкладовToolStripMenuItem_Click"/>
+                <MenuItem Header="Заказы посетителей" Height="37" Margin="0,0,-33,0" Click="заказыПосетителейToolStripMenuItem_Click"/>
+            </MenuItem>
         </Menu>
         <Button x:Name="buttonCreateZakaz" Content="Создать заказ" HorizontalAlignment="Left" Margin="909,48,0,0" VerticalAlignment="Top" Width="138" Height="28" Click="buttonCreateZakaz_Click"/>
         <Button x:Name="buttonTakeZakazInWork" Content="Отдать на выполнение" HorizontalAlignment="Left" Margin="909,100,0,0" VerticalAlignment="Top" Width="138" Height="28" Click="buttonTakeZakazInWork_Click"/>

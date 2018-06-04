@@ -1,18 +1,14 @@
 ﻿using AbstractSushiBarService;
 using AbstractSushiBarService.ImplementationsBD;
 using AbstractSushiBarService.Interfaces;
-using AbstractSushiBarWPF;
 using System;
 using System.Data.Entity;
 using System.Windows;
 using Unity;
 using Unity.Lifetime;
 
-namespace WpfMotorZavod
+namespace AbstractSushiBarWPF
 {
-    /// <summary>
-    /// Логика взаимодействия для App.xaml
-    /// </summary>
     public partial class App : Application
     {
         [STAThread]
@@ -34,7 +30,7 @@ namespace WpfMotorZavod
             currentContainer.RegisterType<ISushiService, SushiServiceBD>(new HierarchicalLifetimeManager());
             currentContainer.RegisterType<IStorageService, StorageServiceBD>(new HierarchicalLifetimeManager());
             currentContainer.RegisterType<IBaseService, BaseServiceBD>(new HierarchicalLifetimeManager());
-
+            currentContainer.RegisterType<IReportService, ReportServiceBD>(new HierarchicalLifetimeManager());
             return currentContainer;
         }
     }
