@@ -1,11 +1,9 @@
-﻿using AbstractSushiBarService.Interfaces;
+﻿using AbstractSushiBarService.BindingModels;
 using AbstractSushiBarService.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractSushiBarWPF
 {
@@ -14,16 +12,10 @@ namespace AbstractSushiBarWPF
     /// </summary>
     public partial class IngredientsWindow : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly IIngredientService service;
-
-        public IngredientsWindow(IIngredientService service)
+        public IngredientsWindow()
         {
             InitializeComponent();
             Loaded += IngredientsWindow_Load;
-            this.service = service;
         }
 
         private void IngredientsWindow_Load(object sender, EventArgs e)
@@ -35,12 +27,20 @@ namespace AbstractSushiBarWPF
         {
             try
             {
-                List<IngredientViewModel> list = service.GetList();
-                if (list != null)
+                var response = APIClient.GetRequest("api/Ingredient/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
-                    dataGridViewElements.ItemsSource = list;
-                    dataGridViewElements.Columns[0].Visibility = Visibility.Hidden;
-                    dataGridViewElements.Columns[1].Width = DataGridLength.Auto;
+                    List<IngredientViewModel> list = APIClient.GetElement<List<IngredientViewModel>>(response);
+                    if (list != null)
+                    {
+                        dataGridViewIngredients.ItemsSource = list;
+                        dataGridViewIngredients.Columns[0].Visibility = Visibility.Hidden;
+                        dataGridViewIngredients.Columns[1].Width = DataGridLength.Auto;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APIClient.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -51,17 +51,17 @@ namespace AbstractSushiBarWPF
 
         private void buttonAdd_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<IngredientWindow>();
+            var form = new IngredientWindow();
             if (form.ShowDialog() == true)
                 LoadData();
         }
 
         private void buttonUpd_Click(object sender, EventArgs e)
         {
-            if (dataGridViewElements.SelectedItem != null)
+            if (dataGridViewIngredients.SelectedItem != null)
             {
-                var form = Container.Resolve<IngredientWindow>();
-                form.ID = ((IngredientViewModel)dataGridViewElements.SelectedItem).Id;
+                var form = new IngredientWindow();
+                form.Id = ((IngredientViewModel)dataGridViewIngredients.SelectedItem).Id;
                 if (form.ShowDialog() == true)
                     LoadData();
             }
@@ -69,15 +69,19 @@ namespace AbstractSushiBarWPF
 
         private void buttonDel_Click(object sender, EventArgs e)
         {
-            if (dataGridViewElements.SelectedItem != null)
+            if (dataGridViewIngredients.SelectedItem != null)
             {
                 if (MessageBox.Show("Удалить запись?", "Внимание",
                     MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
                 {
-                    int id = ((IngredientViewModel)dataGridViewElements.SelectedItem).Id;
+                    int id = ((IngredientViewModel)dataGridViewIngredients.SelectedItem).Id;
                     try
                     {
-                        service.DelElement(id);
+                        var response = APIClient.PostRequest("api/Ingredient/DelElement", new VisitorBindingModel { Id = id });
+                        if (!response.Result.IsSuccessStatusCode)
+                        {
+                            throw new Exception(APIClient.GetError(response));
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -94,4 +98,3 @@ namespace AbstractSushiBarWPF
         }
     }
 }
-

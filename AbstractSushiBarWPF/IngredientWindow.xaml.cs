@@ -1,10 +1,9 @@
 ﻿using AbstractSushiBarService.BindingModels;
-using AbstractSushiBarService.Interfaces;
 using AbstractSushiBarService.ViewModels;
 using System;
+using System.Net.Http;
+using System.Threading.Tasks;
 using System.Windows;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractSushiBarWPF
 {
@@ -13,32 +12,31 @@ namespace AbstractSushiBarWPF
     /// </summary>
     public partial class IngredientWindow : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        public int ID { set { id = value; } }
-
-        private readonly IIngredientService service;
+        public int Id { set { id = value; } }
 
         private int? id;
 
-        public IngredientWindow(IIngredientService service)
+        public IngredientWindow()
         {
             InitializeComponent();
-            Loaded += FormIngredient_Load;
-            this.service = service;
+            Loaded += IngredientWindow_Load;
         }
 
-        private void FormIngredient_Load(object sender, EventArgs e)
+        private void IngredientWindow_Load(object sender, EventArgs e)
         {
             if (id.HasValue)
             {
                 try
                 {
-                    IngredientViewModel view = service.GetElement(id.Value);
-                    if (view != null)
+                    var response = APIClient.GetRequest("api/Ingredient/Get/" + id.Value);
+                    if (response.Result.IsSuccessStatusCode)
                     {
-                        textBoxName.Text = view.IngredientName;
+                        var ingredient = APIClient.GetElement<IngredientViewModel>(response);
+                        textBoxName.Text = ingredient.IngredientName;
+                    }
+                    else
+                    {
+                        throw new Exception(APIClient.GetError(response));
                     }
                 }
                 catch (Exception ex)
@@ -57,9 +55,10 @@ namespace AbstractSushiBarWPF
             }
             try
             {
+                Task<HttpResponseMessage> response;
                 if (id.HasValue)
                 {
-                    service.UpdElement(new IngredientBindingModel
+                    response = APIClient.PostRequest("api/Ingredient/UpdElement", new IngredientBindingModel
                     {
                         Id = id.Value,
                         IngredientName = textBoxName.Text
@@ -67,14 +66,21 @@ namespace AbstractSushiBarWPF
                 }
                 else
                 {
-                    service.AddElement(new IngredientBindingModel
+                    response = APIClient.PostRequest("api/Ingredient/AddElement", new IngredientBindingModel
                     {
                         IngredientName = textBoxName.Text
                     });
                 }
-                MessageBox.Show("Сохранение прошло успешно", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-                DialogResult = true;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
+                    DialogResult = true;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APIClient.GetError(response));
+                }
             }
             catch (Exception ex)
             {

@@ -1,10 +1,9 @@
 ﻿using AbstractSushiBarService.BindingModels;
-using AbstractSushiBarService.Interfaces;
 using AbstractSushiBarService.ViewModels;
 using System;
+using System.Net.Http;
+using System.Threading.Tasks;
 using System.Windows;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractSushiBarWPF
 {
@@ -13,20 +12,14 @@ namespace AbstractSushiBarWPF
     /// </summary>
     public partial class CookWindow : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        public int ID { set { id = value; } }
-
-        private readonly ICookService service;
+        public int Id { set { id = value; } }
 
         private int? id;
 
-        public CookWindow(ICookService service)
+        public CookWindow()
         {
             InitializeComponent();
             Loaded += CookWindow_Load;
-            this.service = service;
         }
 
         private void CookWindow_Load(object sender, EventArgs e)
@@ -35,9 +28,16 @@ namespace AbstractSushiBarWPF
             {
                 try
                 {
-                    CookViewModel view = service.GetElement(id.Value);
-                    if (view != null)
-                        textBoxFullName.Text = view.CookFIO;
+                    var response = APIClient.GetRequest("api/Cook/Get/" + id.Value);
+                    if (response.Result.IsSuccessStatusCode)
+                    {
+                        var cook = APIClient.GetElement<CookViewModel>(response);
+                        textBoxFullName.Text = cook.CookFIO;
+                    }
+                    else
+                    {
+                        throw new Exception(APIClient.GetError(response));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -55,9 +55,10 @@ namespace AbstractSushiBarWPF
             }
             try
             {
+                Task<HttpResponseMessage> response;
                 if (id.HasValue)
                 {
-                    service.UpdElement(new CookBindingModel
+                    response = APIClient.PostRequest("api/Cook/UpdElement", new CookBindingModel
                     {
                         Id = id.Value,
                         CookFIO = textBoxFullName.Text
@@ -65,14 +66,21 @@ namespace AbstractSushiBarWPF
                 }
                 else
                 {
-                    service.AddElement(new CookBindingModel
+                    response = APIClient.PostRequest("api/Cook/AddElement", new CookBindingModel
                     {
                         CookFIO = textBoxFullName.Text
                     });
                 }
-                MessageBox.Show("Сохранение прошло успешно", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-                DialogResult = true;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
+                    DialogResult = true;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APIClient.GetError(response));
+                }
             }
             catch (Exception ex)
             {
@@ -87,4 +95,3 @@ namespace AbstractSushiBarWPF
         }
     }
 }
-

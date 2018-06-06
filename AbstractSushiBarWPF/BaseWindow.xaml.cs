@@ -1,13 +1,10 @@
 ﻿using AbstractSushiBarService.BindingModels;
-using AbstractSushiBarService.Interfaces;
 using AbstractSushiBarService.ViewModels;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractSushiBarWPF
 {
@@ -16,33 +13,32 @@ namespace AbstractSushiBarWPF
     /// </summary>
     public partial class BaseWindow : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly IBaseService service;
-
-        private readonly IReportService reportService;
-
-        public BaseWindow(IBaseService service, IReportService reportService)
+        public BaseWindow()
         {
             InitializeComponent();
-            this.service = service;
-            this.reportService = reportService;
         }
 
         private void LoadData()
         {
             try
             {
-                List<ZakazViewModel> list = service.GetList();
-                if (list != null)
+                var response = APIClient.GetRequest("api/Base/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
-                    dataGridViewBase.ItemsSource = list;
-                    dataGridViewBase.Columns[0].Visibility = Visibility.Hidden;
-                    dataGridViewBase.Columns[1].Visibility = Visibility.Hidden;
-                    dataGridViewBase.Columns[3].Visibility = Visibility.Hidden;
-                    dataGridViewBase.Columns[5].Visibility = Visibility.Hidden;
-                    dataGridViewBase.Columns[1].Width = DataGridLength.Auto;
+                    List<ZakazViewModel> list = APIClient.GetElement<List<ZakazViewModel>>(response);
+                    if (list != null)
+                    {
+                        dataGridViewBase.ItemsSource = list;
+                        dataGridViewBase.Columns[0].Visibility = Visibility.Hidden;
+                        dataGridViewBase.Columns[1].Visibility = Visibility.Hidden;
+                        dataGridViewBase.Columns[3].Visibility = Visibility.Hidden;
+                        dataGridViewBase.Columns[5].Visibility = Visibility.Hidden;
+                        dataGridViewBase.Columns[1].Width = DataGridLength.Auto;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APIClient.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -53,43 +49,43 @@ namespace AbstractSushiBarWPF
 
         private void посетителиToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<VisitorsWindow>();
+            var form = new VisitorsWindow();
             form.ShowDialog();
         }
 
         private void ингредиентыToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<IngredientsWindow>();
+            var form = new IngredientsWindow();
             form.ShowDialog();
         }
 
         private void сушиToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<SushisWindow>();
+            var form = new SushisWindow();
             form.ShowDialog();
         }
 
         private void складыToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<StoragesWindow>();
+            var form = new StoragesWindow();
             form.ShowDialog();
         }
 
         private void повараToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<CooksWindow>();
+            var form = new CooksWindow();
             form.ShowDialog();
         }
 
         private void пополнитьСкладToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<PutOnStorageWindow>();
+            var form = new PutOnStorageWindow();
             form.ShowDialog();
         }
 
         private void buttonCreateZakaz_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<CreateZakazWindow>();
+            var form = new CreateZakazWindow();
             form.ShowDialog();
             LoadData();
         }
@@ -98,8 +94,8 @@ namespace AbstractSushiBarWPF
         {
             if (dataGridViewBase.SelectedItem != null)
             {
-                var form = Container.Resolve<TakeZakazInWorkWindow>();
-                form.ID = ((ZakazViewModel)dataGridViewBase.SelectedItem).Id;
+                var form = new TakeZakazInWorkWindow();
+                form.Id = ((ZakazViewModel)dataGridViewBase.SelectedItem).Id;
                 form.ShowDialog();
                 LoadData();
             }
@@ -112,8 +108,18 @@ namespace AbstractSushiBarWPF
                 int id = ((ZakazViewModel)dataGridViewBase.SelectedItem).Id;
                 try
                 {
-                    service.FinishZakaz(id);
-                    LoadData();
+                    var response = APIClient.PostRequest("api/Base/FinishZakaz", new ZakazBindingModel
+                    {
+                        Id = id
+                    });
+                    if (response.Result.IsSuccessStatusCode)
+                    {
+                        LoadData();
+                    }
+                    else
+                    {
+                        throw new Exception(APIClient.GetError(response));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -129,8 +135,18 @@ namespace AbstractSushiBarWPF
                 int id = ((ZakazViewModel)dataGridViewBase.SelectedItem).Id;
                 try
                 {
-                    service.PayZakaz(id);
-                    LoadData();
+                    var response = APIClient.PostRequest("api/Base/PayZakaz", new ZakazBindingModel
+                    {
+                        Id = id
+                    });
+                    if (response.Result.IsSuccessStatusCode)
+                    {
+                        LoadData();
+                    }
+                    else
+                    {
+                        throw new Exception(APIClient.GetError(response));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -156,11 +172,19 @@ namespace AbstractSushiBarWPF
 
                 try
                 {
-                    reportService.SaveSushiPrice(new ReportBindingModel
+
+                    var response = APIClient.PostRequest("api/Report/SaveSushiPrice", new ReportBindingModel
                     {
                         FileName = sfd.FileName
                     });
-                    System.Windows.MessageBox.Show("Выполнено", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                    if (response.Result.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("Выполнено", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        throw new Exception(APIClient.GetError(response));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -179,11 +203,18 @@ namespace AbstractSushiBarWPF
             {
                 try
                 {
-                    reportService.SaveStoragesLoad(new ReportBindingModel
+                    var response = APIClient.PostRequest("api/Report/SaveStoragesLoad", new ReportBindingModel
                     {
                         FileName = sfd.FileName
                     });
-                    MessageBox.Show("Выполнено", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                    if (response.Result.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("Выполнено", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        throw new Exception(APIClient.GetError(response));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -194,9 +225,8 @@ namespace AbstractSushiBarWPF
 
         private void заказыПосетителейToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<VisitorZakazsWindow>();
+            var form = new VisitorZakazsWindow();
             form.ShowDialog();
         }
     }
 }
-

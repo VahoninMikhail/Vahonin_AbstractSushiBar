@@ -1,11 +1,8 @@
 ﻿using AbstractSushiBarService.BindingModels;
-using AbstractSushiBarService.Interfaces;
 using AbstractSushiBarService.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Windows;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractSushiBarWPF
 {
@@ -14,23 +11,14 @@ namespace AbstractSushiBarWPF
     /// </summary>
     public partial class TakeZakazInWorkWindow : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        public int ID { set { id = value; } }
-
-        private readonly ICookService serviceCook;
-
-        private readonly IBaseService serviceBase;
+        public int Id { set { id = value; } }
 
         private int? id;
 
-        public TakeZakazInWorkWindow(ICookService serviceI, IBaseService serviceM)
+        public TakeZakazInWorkWindow()
         {
             InitializeComponent();
             Loaded += TakeZakazInWorkWindow_Load;
-            this.serviceCook = serviceI;
-            this.serviceBase = serviceM;
         }
 
         private void TakeZakazInWorkWindow_Load(object sender, EventArgs e)
@@ -39,17 +27,24 @@ namespace AbstractSushiBarWPF
             {
                 if (!id.HasValue)
                 {
-                    MessageBox.Show("Не указан заказ", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("Не указана заявка", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                     Close();
                 }
-                List<CookViewModel> listCook = serviceCook.GetList();
-                if (listCook != null)
+                var response = APIClient.GetRequest("api/Cook/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
-                    comboBoxCook.DisplayMemberPath = "CookFIO";
-                    comboBoxCook.SelectedValuePath = "Id";
-                    comboBoxCook.ItemsSource = listCook;
-                    comboBoxCook.SelectedItem = null;
-
+                    List<CookViewModel> list = APIClient.GetElement<List<CookViewModel>>(response);
+                    if (list != null)
+                    {
+                        comboBoxCook.DisplayMemberPath = "CookFIO";
+                        comboBoxCook.SelectedValuePath = "Id";
+                        comboBoxCook.ItemsSource = list;
+                        comboBoxCook.SelectedItem = null;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APIClient.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -62,19 +57,26 @@ namespace AbstractSushiBarWPF
         {
             if (comboBoxCook.SelectedItem == null)
             {
-                MessageBox.Show("Выберите повара", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Выберите рабочего", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             try
             {
-                serviceBase.TakeZakazInWork(new ZakazBindingModel
+                var response = APIClient.PostRequest("api/Base/TakeZakazInWork", new ZakazBindingModel
                 {
                     Id = id.Value,
                     CookId = ((CookViewModel)comboBoxCook.SelectedItem).Id,
                 });
-                MessageBox.Show("Сохранение прошло успешно", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-                DialogResult = true;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
+                    DialogResult = true;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APIClient.GetError(response));
+                }
             }
             catch (Exception ex)
             {
@@ -89,4 +91,3 @@ namespace AbstractSushiBarWPF
         }
     }
 }
-

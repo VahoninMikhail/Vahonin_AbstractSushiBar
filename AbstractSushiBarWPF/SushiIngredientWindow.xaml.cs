@@ -1,11 +1,7 @@
-﻿using AbstractSushiBarService.Interfaces;
-using AbstractSushiBarService.ViewModels;
+﻿using AbstractSushiBarService.ViewModels;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Windows;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractSushiBarWPF
 {
@@ -14,33 +10,31 @@ namespace AbstractSushiBarWPF
     /// </summary>
     public partial class SushiIngredientWindow : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
         public SushiIngredientViewModel Model { set { model = value; } get { return model; } }
-
-        private readonly IIngredientService service;
 
         private SushiIngredientViewModel model;
 
-        public SushiIngredientWindow(IIngredientService service)
+        public SushiIngredientWindow()
         {
             InitializeComponent();
-            Loaded += SushiIngredientWindow_Load;
-            this.service = service;
+            Loaded += FormIngredientSushi_Load;
         }
 
-        private void SushiIngredientWindow_Load(object sender, EventArgs e)
+        private void FormIngredientSushi_Load(object sender, EventArgs e)
         {
-            List<IngredientViewModel> list = service.GetList();
             try
             {
-                if (list != null)
+                var response = APIClient.GetRequest("api/Ingredient/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
                     comboBoxIngredient.DisplayMemberPath = "IngredientName";
                     comboBoxIngredient.SelectedValuePath = "Id";
-                    comboBoxIngredient.ItemsSource = list;
+                    comboBoxIngredient.ItemsSource = APIClient.GetElement<List<IngredientViewModel>>(response);
                     comboBoxIngredient.SelectedItem = null;
+                }
+                else
+                {
+                    throw new Exception(APIClient.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -51,13 +45,7 @@ namespace AbstractSushiBarWPF
             if (model != null)
             {
                 comboBoxIngredient.IsEnabled = false;
-                foreach (IngredientViewModel item in list)
-                {
-                    if (item.IngredientName == model.IngredientName)
-                    {
-                        comboBoxIngredient.SelectedItem = item;
-                    }
-                }
+                comboBoxIngredient.SelectedValue = model.IngredientId;
                 textBoxCount.Text = model.Count.ToString();
             }
         }
@@ -71,7 +59,7 @@ namespace AbstractSushiBarWPF
             }
             if (comboBoxIngredient.SelectedItem == null)
             {
-                MessageBox.Show("Выберите ингредиент", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Выберите заготовку", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             try
@@ -106,4 +94,5 @@ namespace AbstractSushiBarWPF
         }
     }
 }
+
 

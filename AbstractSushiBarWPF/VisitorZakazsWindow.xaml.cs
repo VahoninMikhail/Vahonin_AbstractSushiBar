@@ -2,24 +2,17 @@
 using Microsoft.Reporting.WinForms;
 using Microsoft.Win32;
 using System.Windows;
-using Unity;
-using Unity.Attributes;
-using AbstractSushiBarService.Interfaces;
 using AbstractSushiBarService.BindingModels;
+using AbstractSushiBarService.ViewModels;
+using System.Collections.Generic;
 
 namespace AbstractSushiBarWPF
 {
     public partial class VisitorZakazsWindow : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly IReportService service;
-
-        public VisitorZakazsWindow(IReportService service)
+        public VisitorZakazsWindow()
         {
             InitializeComponent();
-            this.service = service;
         }
 
         private void buttonMake_Click(object sender, EventArgs e)
@@ -38,13 +31,22 @@ namespace AbstractSushiBarWPF
                 reportViewer.LocalReport.SetParameters(parameter);
 
 
-                var dataSource = service.GetVisitorZakazs(new ReportBindingModel
+                var response = APIClient.PostRequest("api/Report/GetVisitorZakazs", new ReportBindingModel
                 {
                     DateFrom = dateTimePickerFrom.SelectedDate,
                     DateTo = dateTimePickerTo.SelectedDate
                 });
-                ReportDataSource source = new ReportDataSource("DataSetZakazs", dataSource);
-                reportViewer.LocalReport.DataSources.Add(source);
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    var dataSource = APIClient.GetElement<List<VisitorZakazsModel>>(response);
+                    ReportDataSource source = new ReportDataSource("DataSetZakazs", dataSource);
+                    reportViewer.LocalReport.DataSources.Add(source);
+                }
+                else
+                {
+                    throw new Exception(APIClient.GetError(response));
+                }
+
                 reportViewer.RefreshReport();
             }
             catch (Exception ex)
@@ -68,13 +70,20 @@ namespace AbstractSushiBarWPF
             {
                 try
                 {
-                    service.SaveVisitorZakazs(new ReportBindingModel
+                    var response = APIClient.PostRequest("api/Report/SaveVisitorZakazs", new ReportBindingModel
                     {
                         FileName = sfd.FileName,
                         DateFrom = dateTimePickerFrom.SelectedDate,
                         DateTo = dateTimePickerTo.SelectedDate
                     });
-                    MessageBox.Show("Выполнено", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                    if (response.Result.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("Выполнено", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        throw new Exception(APIClient.GetError(response));
+                    }
                 }
                 catch (Exception ex)
                 {

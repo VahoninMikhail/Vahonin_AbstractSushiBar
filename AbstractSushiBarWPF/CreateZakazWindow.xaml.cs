@@ -1,61 +1,62 @@
 ﻿using AbstractSushiBarService.BindingModels;
-using AbstractSushiBarService.Interfaces;
 using AbstractSushiBarService.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractSushiBarWPF
 {
     /// <summary>
-    /// Логика взаимодействия для FormCreateZakaz.xaml
+    /// Логика взаимодействия для CreateZakazWindow.xaml
     /// </summary>
     public partial class CreateZakazWindow : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly IVisitorService serviceVisitor;
-
-        private readonly ISushiService serviceSushi;
-
-        private readonly IBaseService serviceBase;
-
-
-        public CreateZakazWindow(IVisitorService serviceV, ISushiService serviceS, IBaseService serviceB)
+        public CreateZakazWindow()
         {
             InitializeComponent();
-            Loaded += CreateZakazWindow_Load;
+            Loaded += FormCreateZakaz_Load;
             comboBoxSushi.SelectionChanged += comboBoxSushi_SelectedIndexChanged;
             comboBoxSushi.SelectionChanged += new SelectionChangedEventHandler(comboBoxSushi_SelectedIndexChanged);
-            this.serviceVisitor = serviceV;
-            this.serviceSushi = serviceS;
-            this.serviceBase = serviceB;
         }
 
-        private void CreateZakazWindow_Load(object sender, EventArgs e)
+        private void FormCreateZakaz_Load(object sender, EventArgs e)
         {
             try
             {
-                List<VisitorViewModel> listVisitor = serviceVisitor.GetList();
-                if (listVisitor != null)
+                var responseC = APIClient.GetRequest("api/Visitor/GetList");
+                if (responseC.Result.IsSuccessStatusCode)
                 {
-                    comboBoxVisitor.DisplayMemberPath = "VisitorFIO";
-                    comboBoxVisitor.SelectedValuePath = "Id";
-                    comboBoxVisitor.ItemsSource = listVisitor;
-                    comboBoxSushi.SelectedItem = null;
+                    List<VisitorViewModel> list = APIClient.GetElement<List<VisitorViewModel>>(responseC);
+                    if (list != null)
+                    {
+                        comboBoxVisitor.DisplayMemberPath = "VisitorFIO";
+                        comboBoxVisitor.SelectedValuePath = "Id";
+                        comboBoxVisitor.ItemsSource = list;
+                        comboBoxSushi.SelectedItem = null;
+                    }
                 }
-                List<SushiViewModel> listSushi = serviceSushi.GetList();
-                if (listSushi != null)
+                else
                 {
-                    comboBoxSushi.DisplayMemberPath = "SushiName";
-                    comboBoxSushi.SelectedValuePath = "Id";
-                    comboBoxSushi.ItemsSource = listSushi;
-                    comboBoxSushi.SelectedItem = null;
+                    throw new Exception(APIClient.GetError(responseC));
                 }
+                var responseP = APIClient.GetRequest("api/Sushi/GetList");
+                if (responseP.Result.IsSuccessStatusCode)
+                {
+                    List<SushiViewModel> list = APIClient.GetElement<List<SushiViewModel>>(responseP);
+                    if (list != null)
+                    {
+                        comboBoxSushi.DisplayMemberPath = "SushiName";
+                        comboBoxSushi.SelectedValuePath = "Id";
+                        comboBoxSushi.ItemsSource = list;
+                        comboBoxSushi.SelectedItem = null;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APIClient.GetError(responseP));
+                }
+
             }
             catch (Exception ex)
             {
@@ -70,9 +71,17 @@ namespace AbstractSushiBarWPF
                 try
                 {
                     int id = ((SushiViewModel)comboBoxSushi.SelectedItem).Id;
-                    SushiViewModel suhsi = serviceSushi.GetElement(id);
-                    int count = Convert.ToInt32(textBoxCount.Text);
-                    textBoxSum.Text = (count * suhsi.Price).ToString();
+                    var responseP = APIClient.GetRequest("api/Sushi/Get/" + id);
+                    if (responseP.Result.IsSuccessStatusCode)
+                    {
+                        SushiViewModel mebel = APIClient.GetElement<SushiViewModel>(responseP);
+                        int count = Convert.ToInt32(textBoxCount.Text);
+                        textBoxSum.Text = (count * (int)mebel.Price).ToString();
+                    }
+                    else
+                    {
+                        throw new Exception(APIClient.GetError(responseP));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -100,26 +109,33 @@ namespace AbstractSushiBarWPF
             }
             if (comboBoxVisitor.SelectedItem == null)
             {
-                MessageBox.Show("Выберите посетителя", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Выберите получателя", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             if (comboBoxSushi.SelectedItem == null)
             {
-                MessageBox.Show("Выберите суши", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Выберите мебель", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             try
             {
-                serviceBase.CreateZakaz(new ZakazBindingModel
+                var response = APIClient.PostRequest("api/Base/CreateZakaz", new ZakazBindingModel
                 {
-                    VisitorId = ((VisitorViewModel)comboBoxVisitor.SelectedItem).Id,
-                    SushiId = ((SushiViewModel)comboBoxSushi.SelectedItem).Id,
+                    VisitorId = Convert.ToInt32(comboBoxVisitor.SelectedValue),
+                    SushiId = Convert.ToInt32(comboBoxSushi.SelectedValue),
                     Count = Convert.ToInt32(textBoxCount.Text),
-                    Sum = Convert.ToDecimal(textBoxSum.Text)
+                    Sum = Convert.ToInt32(textBoxSum.Text)
                 });
-                MessageBox.Show("Сохранение прошло успешно", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-                DialogResult = true;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
+                    DialogResult = true;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APIClient.GetError(response));
+                }
             }
             catch (Exception ex)
             {

@@ -1,11 +1,9 @@
-﻿using AbstractSushiBarService.Interfaces;
+﻿using AbstractSushiBarService.BindingModels;
 using AbstractSushiBarService.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractSushiBarWPF
 {
@@ -14,16 +12,10 @@ namespace AbstractSushiBarWPF
     /// </summary>
     public partial class StoragesWindow : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly IStorageService service;
-
-        public StoragesWindow(IStorageService service)
+        public StoragesWindow()
         {
             InitializeComponent();
             Loaded += StoragesWindow_Load;
-            this.service = service;
         }
 
         private void StoragesWindow_Load(object sender, EventArgs e)
@@ -35,12 +27,16 @@ namespace AbstractSushiBarWPF
         {
             try
             {
-                List<StorageViewModel> list = service.GetList();
-                if (list != null)
+                var response = APIClient.GetRequest("api/Storage/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
-                    dataGridViewStorages.ItemsSource = list;
-                    dataGridViewStorages.Columns[0].Visibility = Visibility.Hidden;
-                    dataGridViewStorages.Columns[1].Width = DataGridLength.Auto;
+                    List<StorageViewModel> list = APIClient.GetElement<List<StorageViewModel>>(response);
+                    if (list != null)
+                    {
+                        dataGridViewStorages.ItemsSource = list;
+                        dataGridViewStorages.Columns[0].Visibility = Visibility.Hidden;
+                        dataGridViewStorages.Columns[1].Width = DataGridLength.Auto;
+                    }
                 }
             }
             catch (Exception ex)
@@ -51,7 +47,7 @@ namespace AbstractSushiBarWPF
 
         private void buttonAdd_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<StorageWindow>();
+            var form = new StorageWindow();
             if (form.ShowDialog() == true)
                 LoadData();
         }
@@ -60,8 +56,8 @@ namespace AbstractSushiBarWPF
         {
             if (dataGridViewStorages.SelectedItem != null)
             {
-                var form = Container.Resolve<StorageWindow>();
-                form.ID = ((StorageViewModel)dataGridViewStorages.SelectedItem).Id;
+                var form = new StorageWindow();
+                form.Id = ((StorageViewModel)dataGridViewStorages.SelectedItem).Id;
                 if (form.ShowDialog() == true)
                 {
                     LoadData();
@@ -79,7 +75,11 @@ namespace AbstractSushiBarWPF
                     int id = ((StorageViewModel)dataGridViewStorages.SelectedItem).Id;
                     try
                     {
-                        service.DelElement(id);
+                        var response = APIClient.PostRequest("api/Storage/DelElement", new VisitorBindingModel { Id = id });
+                        if (!response.Result.IsSuccessStatusCode)
+                        {
+                            throw new Exception(APIClient.GetError(response));
+                        }
                     }
                     catch (Exception ex)
                     {

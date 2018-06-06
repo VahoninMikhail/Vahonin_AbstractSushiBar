@@ -1,11 +1,9 @@
-﻿using AbstractSushiBarService.Interfaces;
+﻿using AbstractSushiBarService.BindingModels;
 using AbstractSushiBarService.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractSushiBarWPF
 {
@@ -14,16 +12,10 @@ namespace AbstractSushiBarWPF
     /// </summary>
     public partial class SushisWindow : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly ISushiService service;
-
-        public SushisWindow(ISushiService service)
+        public SushisWindow()
         {
             InitializeComponent();
             Loaded += SushisWindow_Load;
-            this.service = service;
         }
 
         private void SushisWindow_Load(object sender, EventArgs e)
@@ -35,13 +27,21 @@ namespace AbstractSushiBarWPF
         {
             try
             {
-                List<SushiViewModel> list = service.GetList();
-                if (list != null)
+                var response = APIClient.GetRequest("api/Sushi/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
-                    dataGridViewSushis.ItemsSource = list;
-                    dataGridViewSushis.Columns[0].Visibility = Visibility.Hidden;
-                    dataGridViewSushis.Columns[1].Width = DataGridLength.Auto;
-                    dataGridViewSushis.Columns[3].Visibility = Visibility.Hidden;
+                    List<SushiViewModel> list = APIClient.GetElement<List<SushiViewModel>>(response);
+                    if (list != null)
+                    {
+                        dataGridViewSushis.ItemsSource = list;
+                        dataGridViewSushis.Columns[0].Visibility = Visibility.Hidden;
+                        dataGridViewSushis.Columns[1].Width = DataGridLength.Auto;
+                        dataGridViewSushis.Columns[3].Visibility = Visibility.Hidden;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APIClient.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -52,7 +52,7 @@ namespace AbstractSushiBarWPF
 
         private void buttonAdd_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<SushiWindow>();
+            var form = new SushiWindow();
             if (form.ShowDialog() == true)
                 LoadData();
         }
@@ -61,8 +61,8 @@ namespace AbstractSushiBarWPF
         {
             if (dataGridViewSushis.SelectedItem != null)
             {
-                var form = Container.Resolve<SushiWindow>();
-                form.ID = ((SushiViewModel)dataGridViewSushis.SelectedItem).Id;
+                var form = new SushiWindow();
+                form.Id = ((SushiViewModel)dataGridViewSushis.SelectedItem).Id;
                 if (form.ShowDialog() == true)
                     LoadData();
             }
@@ -79,7 +79,11 @@ namespace AbstractSushiBarWPF
                     int id = ((SushiViewModel)dataGridViewSushis.SelectedItem).Id;
                     try
                     {
-                        service.DelElement(id);
+                        var response = APIClient.PostRequest("api/Sushi/DelElement", new VisitorBindingModel { Id = id });
+                        if (!response.Result.IsSuccessStatusCode)
+                        {
+                            throw new Exception(APIClient.GetError(response));
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -96,4 +100,3 @@ namespace AbstractSushiBarWPF
         }
     }
 }
-

@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AbstractSushiBarView", "Abs
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AbstractSushiBarWPF", "AbstractSushiBarWPF\AbstractSushiBarWPF.csproj", "{585777CE-63BA-49D4-A435-0918BC23B3E9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AbstractSushiBarRestApi", "AbstractSushiBarRestApi\AbstractSushiBarRestApi.csproj", "{C9B10F65-97CF-4AED-9012-7DBB22B66A72}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{585777CE-63BA-49D4-A435-0918BC23B3E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{585777CE-63BA-49D4-A435-0918BC23B3E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{585777CE-63BA-49D4-A435-0918BC23B3E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C9B10F65-97CF-4AED-9012-7DBB22B66A72}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9B10F65-97CF-4AED-9012-7DBB22B66A72}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9B10F65-97CF-4AED-9012-7DBB22B66A72}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9B10F65-97CF-4AED-9012-7DBB22B66A72}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

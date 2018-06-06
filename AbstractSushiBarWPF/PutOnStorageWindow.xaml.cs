@@ -1,11 +1,8 @@
 ﻿using AbstractSushiBarService.BindingModels;
-using AbstractSushiBarService.Interfaces;
 using AbstractSushiBarService.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Windows;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractSushiBarWPF
 {
@@ -14,43 +11,47 @@ namespace AbstractSushiBarWPF
     /// </summary>
     public partial class PutOnStorageWindow : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly IStorageService serviceStorage;
-
-        private readonly IIngredientService serviceIngredient;
-
-        private readonly IBaseService serviceBase;
-
-        public PutOnStorageWindow(IStorageService serviceS, IIngredientService serviceC, IBaseService serviceM)
+        public PutOnStorageWindow()
         {
             InitializeComponent();
             Loaded += PutOnStorageWindow_Load;
-            this.serviceStorage = serviceS;
-            this.serviceIngredient = serviceC;
-            this.serviceBase = serviceM;
         }
 
         private void PutOnStorageWindow_Load(object sender, EventArgs e)
         {
             try
             {
-                List<IngredientViewModel> listIngredient = serviceIngredient.GetList();
-                if (listIngredient != null)
+                var responseC = APIClient.GetRequest("api/Ingredient/GetList");
+                if (responseC.Result.IsSuccessStatusCode)
                 {
-                    comboBoxIngredient.DisplayMemberPath = "IngredientName";
-                    comboBoxIngredient.SelectedValuePath = "Id";
-                    comboBoxIngredient.ItemsSource = listIngredient;
-                    comboBoxIngredient.SelectedItem = null;
+                    List<IngredientViewModel> list = APIClient.GetElement<List<IngredientViewModel>>(responseC);
+                    if (list != null)
+                    {
+                        comboBoxIngredient.DisplayMemberPath = "IngredientName";
+                        comboBoxIngredient.SelectedValuePath = "Id";
+                        comboBoxIngredient.ItemsSource = list;
+                        comboBoxIngredient.SelectedItem = null;
+                    }
                 }
-                List<StorageViewModel> listStorage = serviceStorage.GetList();
-                if (listStorage != null)
+                else
                 {
-                    comboBoxStorage.DisplayMemberPath = "StorageName";
-                    comboBoxStorage.SelectedValuePath = "Id";
-                    comboBoxStorage.ItemsSource = listStorage;
-                    comboBoxStorage.SelectedItem = null;
+                    throw new Exception(APIClient.GetError(responseC));
+                }
+                var responseS = APIClient.GetRequest("api/Storage/GetList");
+                if (responseS.Result.IsSuccessStatusCode)
+                {
+                    List<StorageViewModel> list = APIClient.GetElement<List<StorageViewModel>>(responseS);
+                    if (list != null)
+                    {
+                        comboBoxStorage.DisplayMemberPath = "StorageName";
+                        comboBoxStorage.SelectedValuePath = "Id";
+                        comboBoxStorage.ItemsSource = list;
+                        comboBoxStorage.SelectedItem = null;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APIClient.GetError(responseC));
                 }
             }
             catch (Exception ex)
@@ -68,26 +69,32 @@ namespace AbstractSushiBarWPF
             }
             if (comboBoxIngredient.SelectedItem == null)
             {
-                MessageBox.Show("Выберите ингредиент", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Выберите заготовку", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             if (comboBoxStorage.SelectedItem == null)
             {
-                MessageBox.Show("Выберите склад", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Выберите базу", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             try
             {
-                serviceBase.PutIngredientOnStorage(new StorageIngredientBindingModel
+                var response = APIClient.PostRequest("api/Base/PutIngredientOnStorage", new StorageIngredientBindingModel
                 {
                     IngredientId = Convert.ToInt32(comboBoxIngredient.SelectedValue),
                     StorageId = Convert.ToInt32(comboBoxStorage.SelectedValue),
                     Count = Convert.ToInt32(textBoxCount.Text)
                 });
-                MessageBox.Show("Сохранение прошло успешно", "Информация",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
-                DialogResult = true;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
+                    DialogResult = true;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APIClient.GetError(response));
+                }
             }
             catch (Exception ex)
             {

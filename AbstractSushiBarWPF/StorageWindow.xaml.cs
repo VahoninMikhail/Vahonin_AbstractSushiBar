@@ -1,11 +1,10 @@
 ﻿using AbstractSushiBarService.BindingModels;
-using AbstractSushiBarService.Interfaces;
 using AbstractSushiBarService.ViewModels;
 using System;
+using System.Net.Http;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using Unity;
-using Unity.Attributes;
 
 namespace AbstractSushiBarWPF
 {
@@ -14,20 +13,15 @@ namespace AbstractSushiBarWPF
     /// </summary>
     public partial class StorageWindow : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        public int ID { set { id = value; } }
-
-        private readonly IStorageService service;
+        public int Id { set { id = value; } }
 
         private int? id;
 
-        public StorageWindow(IStorageService service)
+        public StorageWindow()
         {
             InitializeComponent();
             Loaded += StorageWindow_Load;
-            this.service = service;
+
         }
 
         private void StorageWindow_Load(object sender, EventArgs e)
@@ -36,11 +30,12 @@ namespace AbstractSushiBarWPF
             {
                 try
                 {
-                    StorageViewModel view = service.GetElement(id.Value);
-                    if (view != null)
+                    var response = APIClient.GetRequest("api/Storage/Get/" + id.Value);
+                    if (response.Result.IsSuccessStatusCode)
                     {
-                        textBoxName.Text = view.StorageName;
-                        dataGridViewStorage.ItemsSource = view.StorageIngredients;
+                        var baza = APIClient.GetElement<StorageViewModel>(response);
+                        textBoxName.Text = baza.StorageName;
+                        dataGridViewStorage.ItemsSource = baza.StorageIngredients;
                         dataGridViewStorage.Columns[0].Visibility = Visibility.Hidden;
                         dataGridViewStorage.Columns[1].Visibility = Visibility.Hidden;
                         dataGridViewStorage.Columns[2].Visibility = Visibility.Hidden;
@@ -63,9 +58,10 @@ namespace AbstractSushiBarWPF
             }
             try
             {
+                Task<HttpResponseMessage> response;
                 if (id.HasValue)
                 {
-                    service.UpdElement(new StorageBindingModel
+                    response = APIClient.PostRequest("api/Storage/UpdElement", new StorageBindingModel
                     {
                         Id = id.Value,
                         StorageName = textBoxName.Text
@@ -73,14 +69,21 @@ namespace AbstractSushiBarWPF
                 }
                 else
                 {
-                    service.AddElement(new StorageBindingModel
+                    response = APIClient.PostRequest("api/Storage/AddElement", new StorageBindingModel
                     {
                         StorageName = textBoxName.Text
                     });
                 }
-                MessageBox.Show("Сохранение прошло успешно", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-                DialogResult = true;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
+                    DialogResult = true;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APIClient.GetError(response));
+                }
             }
             catch (Exception ex)
             {
@@ -95,4 +98,3 @@ namespace AbstractSushiBarWPF
         }
     }
 }
-
