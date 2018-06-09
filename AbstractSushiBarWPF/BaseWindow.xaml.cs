@@ -3,6 +3,7 @@ using AbstractSushiBarService.ViewModels;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -22,27 +23,23 @@ namespace AbstractSushiBarWPF
         {
             try
             {
-                var response = APIClient.GetRequest("api/Base/GetList");
-                if (response.Result.IsSuccessStatusCode)
+                List<ZakazViewModel> list = Task.Run(() => APIClient.GetRequestData<List<ZakazViewModel>>("api/Base/GetList")).Result;
+                if (list != null)
                 {
-                    List<ZakazViewModel> list = APIClient.GetElement<List<ZakazViewModel>>(response);
-                    if (list != null)
-                    {
-                        dataGridViewBase.ItemsSource = list;
-                        dataGridViewBase.Columns[0].Visibility = Visibility.Hidden;
-                        dataGridViewBase.Columns[1].Visibility = Visibility.Hidden;
-                        dataGridViewBase.Columns[3].Visibility = Visibility.Hidden;
-                        dataGridViewBase.Columns[5].Visibility = Visibility.Hidden;
-                        dataGridViewBase.Columns[1].Width = DataGridLength.Auto;
-                    }
-                }
-                else
-                {
-                    throw new Exception(APIClient.GetError(response));
+                    dataGridViewBase.ItemsSource = list;
+                    dataGridViewBase.Columns[0].Visibility = Visibility.Hidden;
+                    dataGridViewBase.Columns[1].Visibility = Visibility.Hidden;
+                    dataGridViewBase.Columns[3].Visibility = Visibility.Hidden;
+                    dataGridViewBase.Columns[5].Visibility = Visibility.Hidden;
+                    dataGridViewBase.Columns[1].Width = DataGridLength.Auto;
                 }
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -106,25 +103,23 @@ namespace AbstractSushiBarWPF
             if (dataGridViewBase.SelectedItem != null)
             {
                 int id = ((ZakazViewModel)dataGridViewBase.SelectedItem).Id;
-                try
+                Task task = Task.Run(() => APIClient.PostRequestData("api/Base/FinishZakaz", new ZakazBindingModel
                 {
-                    var response = APIClient.PostRequest("api/Base/FinishZakaz", new ZakazBindingModel
-                    {
-                        Id = id
-                    });
-                    if (response.Result.IsSuccessStatusCode)
-                    {
-                        LoadData();
-                    }
-                    else
-                    {
-                        throw new Exception(APIClient.GetError(response));
-                    }
-                }
-                catch (Exception ex)
+                    Id = id
+                }));
+
+                task.ContinueWith((prevTask) => MessageBox.Show("Статус заявки изменен. Обновите список", "Успех", MessageBoxButton.OK, MessageBoxImage.Information),
+                TaskContinuationOptions.OnlyOnRanToCompletion);
+
+                task.ContinueWith((prevTask) =>
                 {
+                    var ex = (Exception)prevTask.Exception;
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
                     MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                }, TaskContinuationOptions.OnlyOnFaulted);
             }
         }
 
@@ -133,25 +128,23 @@ namespace AbstractSushiBarWPF
             if (dataGridViewBase.SelectedItem != null)
             {
                 int id = ((ZakazViewModel)dataGridViewBase.SelectedItem).Id;
-                try
+                Task task = Task.Run(() => APIClient.PostRequestData("api/Base/PayZakaz", new ZakazBindingModel
                 {
-                    var response = APIClient.PostRequest("api/Base/PayZakaz", new ZakazBindingModel
-                    {
-                        Id = id
-                    });
-                    if (response.Result.IsSuccessStatusCode)
-                    {
-                        LoadData();
-                    }
-                    else
-                    {
-                        throw new Exception(APIClient.GetError(response));
-                    }
-                }
-                catch (Exception ex)
+                    Id = id
+                }));
+
+                task.ContinueWith((prevTask) => MessageBox.Show("Статус заявки изменен. Обновите список", "Успех", MessageBoxButton.OK, MessageBoxImage.Information),
+                TaskContinuationOptions.OnlyOnRanToCompletion);
+
+                task.ContinueWith((prevTask) =>
                 {
+                    var ex = (Exception)prevTask.Exception;
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
                     MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                }, TaskContinuationOptions.OnlyOnFaulted);
             }
         }
 
@@ -169,30 +162,26 @@ namespace AbstractSushiBarWPF
 
             if (sfd.ShowDialog() == true)
             {
-
-                try
+                string fileName = sfd.FileName;
+                Task task = Task.Run(() => APIClient.PostRequestData("api/Report/SaveSushiPrice", new ReportBindingModel
                 {
+                    FileName = fileName
+                }));
 
-                    var response = APIClient.PostRequest("api/Report/SaveSushiPrice", new ReportBindingModel
-                    {
-                        FileName = sfd.FileName
-                    });
-                    if (response.Result.IsSuccessStatusCode)
-                    {
-                        MessageBox.Show("Выполнено", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
-                    }
-                    else
-                    {
-                        throw new Exception(APIClient.GetError(response));
-                    }
-                }
-                catch (Exception ex)
+                task.ContinueWith((prevTask) => MessageBox.Show("Выполнено", "Успех", MessageBoxButton.OK, MessageBoxImage.Information),
+                TaskContinuationOptions.OnlyOnRanToCompletion);
+
+                task.ContinueWith((prevTask) =>
                 {
-                    System.Windows.MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                    var ex = (Exception)prevTask.Exception;
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
+                    MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                }, TaskContinuationOptions.OnlyOnFaulted);
             }
         }
-
         private void загруженностьСкладовToolStripMenuItem_Click(object sender, EventArgs e)
         {
             SaveFileDialog sfd = new SaveFileDialog
@@ -201,25 +190,24 @@ namespace AbstractSushiBarWPF
             };
             if (sfd.ShowDialog() == true)
             {
-                try
+                string fileName = sfd.FileName;
+                Task task = Task.Run(() => APIClient.PostRequestData("api/Report/SaveStoragesLoad", new ReportBindingModel
                 {
-                    var response = APIClient.PostRequest("api/Report/SaveStoragesLoad", new ReportBindingModel
-                    {
-                        FileName = sfd.FileName
-                    });
-                    if (response.Result.IsSuccessStatusCode)
-                    {
-                        MessageBox.Show("Выполнено", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
-                    }
-                    else
-                    {
-                        throw new Exception(APIClient.GetError(response));
-                    }
-                }
-                catch (Exception ex)
+                    FileName = fileName
+                }));
+
+                task.ContinueWith((prevTask) => MessageBox.Show("Выполнено", "Успех", MessageBoxButton.OK, MessageBoxImage.Information),
+                TaskContinuationOptions.OnlyOnRanToCompletion);
+
+                task.ContinueWith((prevTask) =>
                 {
+                    var ex = (Exception)prevTask.Exception;
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
                     MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                }, TaskContinuationOptions.OnlyOnFaulted);
             }
         }
 

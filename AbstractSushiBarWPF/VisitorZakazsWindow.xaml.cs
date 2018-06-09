@@ -5,6 +5,7 @@ using System.Windows;
 using AbstractSushiBarService.BindingModels;
 using AbstractSushiBarService.ViewModels;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace AbstractSushiBarWPF
 {
@@ -31,21 +32,15 @@ namespace AbstractSushiBarWPF
                 reportViewer.LocalReport.SetParameters(parameter);
 
 
-                var response = APIClient.PostRequest("api/Report/GetVisitorZakazs", new ReportBindingModel
-                {
-                    DateFrom = dateTimePickerFrom.SelectedDate,
-                    DateTo = dateTimePickerTo.SelectedDate
-                });
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    var dataSource = APIClient.GetElement<List<VisitorZakazsModel>>(response);
-                    ReportDataSource source = new ReportDataSource("DataSetZakazs", dataSource);
-                    reportViewer.LocalReport.DataSources.Add(source);
-                }
-                else
-                {
-                    throw new Exception(APIClient.GetError(response));
-                }
+                var dataSource = Task.Run(() => APIClient.PostRequestData<ReportBindingModel, List<VisitorZakazsModel>>("api/Report/GetVisitorZakazs",
+                     new ReportBindingModel
+                     {
+                         DateFrom = dateTimePickerFrom.SelectedDate,
+                         DateTo = dateTimePickerTo.SelectedDate
+                     })).Result;
+
+                ReportDataSource source = new ReportDataSource("DataSetZakazs", dataSource);
+                reportViewer.LocalReport.DataSources.Add(source);
 
                 reportViewer.RefreshReport();
             }
@@ -68,27 +63,25 @@ namespace AbstractSushiBarWPF
             };
             if (sfd.ShowDialog() == true)
             {
-                try
+                string fileName = sfd.FileName;
+                Task task = Task.Run(() => APIClient.PostRequestData("api/Report/SaveVisitorZakazs", new ReportBindingModel
                 {
-                    var response = APIClient.PostRequest("api/Report/SaveVisitorZakazs", new ReportBindingModel
-                    {
-                        FileName = sfd.FileName,
-                        DateFrom = dateTimePickerFrom.SelectedDate,
-                        DateTo = dateTimePickerTo.SelectedDate
-                    });
-                    if (response.Result.IsSuccessStatusCode)
-                    {
-                        MessageBox.Show("Выполнено", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
-                    }
-                    else
-                    {
-                        throw new Exception(APIClient.GetError(response));
-                    }
-                }
-                catch (Exception ex)
+                    FileName = sfd.FileName,
+                    DateFrom = dateTimePickerFrom.SelectedDate,
+                    DateTo = dateTimePickerTo.SelectedDate
+                }));
+                task.ContinueWith((prevTask) => MessageBox.Show("Список заказов сохранен", "Успех", MessageBoxButton.OK, MessageBoxImage.Information),
+            TaskContinuationOptions.OnlyOnRanToCompletion);
+
+                task.ContinueWith((prevTask) =>
                 {
+                    var ex = (Exception)prevTask.Exception;
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
                     MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                }, TaskContinuationOptions.OnlyOnFaulted);
             }
         }
     }

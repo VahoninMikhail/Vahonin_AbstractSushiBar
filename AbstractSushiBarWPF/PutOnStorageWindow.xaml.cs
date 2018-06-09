@@ -2,6 +2,7 @@
 using AbstractSushiBarService.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace AbstractSushiBarWPF
@@ -21,37 +22,21 @@ namespace AbstractSushiBarWPF
         {
             try
             {
-                var responseC = APIClient.GetRequest("api/Ingredient/GetList");
-                if (responseC.Result.IsSuccessStatusCode)
+                List<IngredientViewModel> listC = Task.Run(() => APIClient.GetRequestData<List<IngredientViewModel>>("api/Ingredient/GetList")).Result;
+                if (listC != null)
                 {
-                    List<IngredientViewModel> list = APIClient.GetElement<List<IngredientViewModel>>(responseC);
-                    if (list != null)
-                    {
-                        comboBoxIngredient.DisplayMemberPath = "IngredientName";
-                        comboBoxIngredient.SelectedValuePath = "Id";
-                        comboBoxIngredient.ItemsSource = list;
-                        comboBoxIngredient.SelectedItem = null;
-                    }
+                    comboBoxIngredient.DisplayMemberPath = "IngredientName";
+                    comboBoxIngredient.SelectedValuePath = "Id";
+                    comboBoxIngredient.ItemsSource = listC;
+                    comboBoxIngredient.SelectedItem = null;
                 }
-                else
+                List<StorageViewModel> listS = Task.Run(() => APIClient.GetRequestData<List<StorageViewModel>>("api/Storage/GetList")).Result;
+                if (listS != null)
                 {
-                    throw new Exception(APIClient.GetError(responseC));
-                }
-                var responseS = APIClient.GetRequest("api/Storage/GetList");
-                if (responseS.Result.IsSuccessStatusCode)
-                {
-                    List<StorageViewModel> list = APIClient.GetElement<List<StorageViewModel>>(responseS);
-                    if (list != null)
-                    {
-                        comboBoxStorage.DisplayMemberPath = "StorageName";
-                        comboBoxStorage.SelectedValuePath = "Id";
-                        comboBoxStorage.ItemsSource = list;
-                        comboBoxStorage.SelectedItem = null;
-                    }
-                }
-                else
-                {
-                    throw new Exception(APIClient.GetError(responseC));
+                    comboBoxStorage.DisplayMemberPath = "StorageName";
+                    comboBoxStorage.SelectedValuePath = "Id";
+                    comboBoxStorage.ItemsSource = listS;
+                    comboBoxStorage.SelectedItem = null;
                 }
             }
             catch (Exception ex)
@@ -69,35 +54,46 @@ namespace AbstractSushiBarWPF
             }
             if (comboBoxIngredient.SelectedItem == null)
             {
-                MessageBox.Show("Выберите заготовку", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Выберите ингредиент", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             if (comboBoxStorage.SelectedItem == null)
             {
-                MessageBox.Show("Выберите базу", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Выберите склад", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             try
             {
-                var response = APIClient.PostRequest("api/Base/PutIngredientOnStorage", new StorageIngredientBindingModel
+                int ingredientId = Convert.ToInt32(comboBoxIngredient.SelectedValue);
+                int bazaId = Convert.ToInt32(comboBoxStorage.SelectedValue);
+                int count = Convert.ToInt32(textBoxCount.Text);
+                Task task = Task.Run(() => APIClient.PostRequestData("api/Base/PutIngredientOnStorage", new StorageIngredientBindingModel
                 {
-                    IngredientId = Convert.ToInt32(comboBoxIngredient.SelectedValue),
-                    StorageId = Convert.ToInt32(comboBoxStorage.SelectedValue),
-                    Count = Convert.ToInt32(textBoxCount.Text)
-                });
-                if (response.Result.IsSuccessStatusCode)
+                    IngredientId = ingredientId,
+                    StorageId = bazaId,
+                    Count = count
+                }));
+
+                task.ContinueWith((prevTask) => MessageBox.Show("Склад пополнен", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information),
+                    TaskContinuationOptions.OnlyOnRanToCompletion);
+                task.ContinueWith((prevTask) =>
                 {
-                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
-                    DialogResult = true;
-                    Close();
-                }
-                else
-                {
-                    throw new Exception(APIClient.GetError(response));
-                }
+                    var ex = (Exception)prevTask.Exception;
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
+                    MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                }, TaskContinuationOptions.OnlyOnFaulted);
+
+                Close();
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

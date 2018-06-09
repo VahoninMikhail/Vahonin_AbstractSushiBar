@@ -1,6 +1,7 @@
 ﻿using AbstractSushiBarService.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace AbstractSushiBarWPF
@@ -17,28 +18,25 @@ namespace AbstractSushiBarWPF
         public SushiIngredientWindow()
         {
             InitializeComponent();
-            Loaded += FormIngredientSushi_Load;
+            Loaded += SushiIngredientWindow_Load;
         }
 
-        private void FormIngredientSushi_Load(object sender, EventArgs e)
+        private void SushiIngredientWindow_Load(object sender, EventArgs e)
         {
             try
             {
-                var response = APIClient.GetRequest("api/Ingredient/GetList");
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    comboBoxIngredient.DisplayMemberPath = "IngredientName";
-                    comboBoxIngredient.SelectedValuePath = "Id";
-                    comboBoxIngredient.ItemsSource = APIClient.GetElement<List<IngredientViewModel>>(response);
-                    comboBoxIngredient.SelectedItem = null;
-                }
-                else
-                {
-                    throw new Exception(APIClient.GetError(response));
-                }
+                comboBoxIngredient.DisplayMemberPath = "IngredientName";
+                comboBoxIngredient.SelectedValuePath = "Id";
+                comboBoxIngredient.ItemsSource = Task.Run(() => APIClient.GetRequestData<List<IngredientViewModel>>("api/Ingredient/GetList")).Result;
+                comboBoxIngredient.SelectedItem = null;
+
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
@@ -59,7 +57,7 @@ namespace AbstractSushiBarWPF
             }
             if (comboBoxIngredient.SelectedItem == null)
             {
-                MessageBox.Show("Выберите заготовку", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Выберите ингредиент", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             try
@@ -94,5 +92,6 @@ namespace AbstractSushiBarWPF
         }
     }
 }
+
 
 
